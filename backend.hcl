@@ -1,0 +1,1 @@
+bucket = "terraform-api-data-coinbase"
