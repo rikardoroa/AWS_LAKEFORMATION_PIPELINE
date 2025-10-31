@@ -157,7 +157,7 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
     kms_key_arn        = var.kms_key_arn
 
     # 🔸 Coincide con la estructura esperada por el Crawler
-    prefix              = "coinbase/ingest/partition_date=!{timestamp:yyyy-MM-dd}/!{firehose:random-string}.json.gz"
+    prefix = "coinbase/ingest/partition_date=!{timestamp:yyyy-MM-dd}/"
     error_output_prefix = "coinbase/errors/!{firehose:error-output-type}/"
 
     buffering_interval = 60  # segundos

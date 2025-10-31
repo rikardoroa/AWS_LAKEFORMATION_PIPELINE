@@ -127,43 +127,35 @@ resource "aws_lakeformation_resource" "data_location" {
   depends_on = [time_sleep.wait_for_lakeformation_settings]
 }
 
+
 ##########################################
-# 🧱 8️⃣ Classifiers JSON + JSON GZIP
+# 🧩 Glue JSON Classifier
 ##########################################
 resource "aws_glue_classifier" "json_classifier" {
   name = "coinbase_json_classifier"
-  json_classifier { json_path = "$" }
-}
 
-resource "aws_glue_classifier" "json_gzip_classifier" {
-  name = "coinbase_json_gzip_classifier"
-
-  grok_classifier {
-    classification = "json"
-    grok_pattern   = ".*"
+  json_classifier {
+    json_path = "$"
   }
 }
 
 ##########################################
-# 🧩 9️⃣ Glue Crawler - Detecta y actualiza tablas JSON GZIP
+# 🧩 Glue Crawler para JSON GZIP
 ##########################################
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
   database_name = aws_glue_catalog_database.coinbase_db.name
-  description   = "Crawler que detecta archivos JSON GZIP particionados"
+  description   = "Crawler que detecta archivos JSONL comprimidos con GZIP"
   table_prefix  = ""
 
-  # 🔥 Ruta exacta donde Firehose guarda los archivos
+  # 🔸 Apunta a los archivos que genera Firehose
   s3_target {
     path = "s3://${var.bucket_name}/coinbase/ingest/"
   }
 
-  # 🧠 Usa ambos classifiers para detectar JSON y JSON comprimido (.gz)
-  classifiers = [
-    aws_glue_classifier.json_classifier.name,
-    aws_glue_classifier.json_gzip_classifier.name
-  ]
+  # 🔸 Usa el classifier JSON nativo
+  classifiers = [aws_glue_classifier.json_classifier.name]
 
   recrawl_policy {
     recrawl_behavior = "CRAWL_EVERYTHING"
@@ -174,27 +166,18 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     delete_behavior = "LOG"
   }
 
-  # ✅ Configuración válida para Glue Crawler (sin CompressionType)
   configuration = jsonencode({
     Version  = 1.0,
-    Grouping = {
-      TableGroupingPolicy = "CombineCompatibleSchemas"
-    },
-    CrawlerOutput = {
-      Partitions = { AddOrUpdateBehavior = "InheritFromTable" }
-    }
+    Grouping = { TableGroupingPolicy = "CombineCompatibleSchemas" }
   })
 
-  # ⏱️ Ejecuta cada 6 minutos
-  schedule = "cron(0/6 * * * ? *)"
+  schedule = "cron(0/10 * * * ? *)"
 
-  # ⚡ Dependencias críticas
   depends_on = [
     aws_glue_catalog_database.coinbase_db,
     aws_iam_role_policy.glue_s3_policy,
     aws_iam_role_policy.glue_lakeformation_policy,
-    aws_glue_classifier.json_classifier,
-    aws_glue_classifier.json_gzip_classifier
+    aws_glue_classifier.json_classifier   
   ]
 }
 
