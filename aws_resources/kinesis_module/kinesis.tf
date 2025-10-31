@@ -120,6 +120,9 @@
 # }
 
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 # Kinesis stream (descomenta si lo creará este módulo)
 resource "aws_kinesis_stream" "coinbase_stream" {
   name             = "coinbase-price-stream"

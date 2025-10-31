@@ -119,7 +119,8 @@ resource "aws_iam_role_policy_attachment" "glue_service_role_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
 
-
+# Permisos extra (CloudWatch Logs, S3 data, Glue Catalog) si no los tienes ya en inline policy
+# ...
 
 # 🔐 Lake Formation: registra la data location y otorga permisos al rol del crawler
 resource "aws_lakeformation_resource" "data_location" {
