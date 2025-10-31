@@ -15,7 +15,6 @@ resource "aws_iam_role" "iam_dev_role_cb_api" {
         Principal = {
           Service = [
             "lambda.amazonaws.com",
-            "scheduler.amazonaws.com",
             "firehose.amazonaws.com"
           ]
         }
@@ -41,8 +40,7 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       "logs:DeleteLogGroup",
       "logs:DeleteLogStream"
     ]
-    resources = ["arn:aws:logs:*:*:log-group:/aws/lambda/${aws_lambda_function.lambda_function.function_name}:*",
-    "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws-glue/*"]
+    resources = ["*"]
   }
 
   statement {
@@ -57,7 +55,7 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       "s3:GetObject",
       "s3:DeleteObject",
     ]
-    resources = [var.bucket_arn,"${var.bucket_arn}/*"]
+    resources = ["*"]
   }
 
    statement {
@@ -66,7 +64,7 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
     actions = [
       "lambda:InvokeFunction"
     ]
-    resources = [aws_lambda_function.lambda_function.arn]
+    resources = ["*"]
   }
 
   statement {
@@ -78,7 +76,7 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       "kms:GenerateDataKey*",
       "kms:DescribeKey"
     ]
-    resources = [var.kms_key_arn]
+    resources = ["*"]
   }
 
 
@@ -94,9 +92,7 @@ statement {
     "kinesis:PutRecord",
     "kinesis:PutRecords"
   ]
-  resources = [
-    "arn:aws:kinesis:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stream/${var.stream_name}"
-  ]
+  resources = ["*"]
 }
 
 }
