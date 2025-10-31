@@ -138,6 +138,9 @@ resource "aws_lakeformation_permissions" "lambda_db_permissions" {
   database {
     name = var.database
   }
+   depends_on = [
+    aws_lakeformation_data_lake_settings.admins
+  ]
 }
 
 # --- Lake Formation: Register S3 path
@@ -156,6 +159,15 @@ resource "aws_lakeformation_permissions" "lambda_db_permissions" {
 #   }
 # }
 
+# resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
+#   principal   = aws_iam_role.iam_dev_role_cb_api.arn
+#   permissions = ["DATA_LOCATION_ACCESS"]
+
+#   data_location {
+#     arn = var.data_location
+#   }
+# }
+
 resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
   principal   = aws_iam_role.iam_dev_role_cb_api.arn
   permissions = ["DATA_LOCATION_ACCESS"]
@@ -163,6 +175,11 @@ resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
   data_location {
     arn = var.data_location
   }
+
+ depends_on = [
+    aws_lakeformation_data_lake_settings.admins,
+    aws_lakeformation_permissions.lambda_db_permissions
+  ]
 }
 
 
@@ -193,3 +210,4 @@ resource "aws_lakeformation_permissions" "lambda_db_select" {
     aws_lakeformation_permissions.lambda_db_permissions
   ]
 }
+

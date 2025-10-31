@@ -126,6 +126,7 @@ resource "aws_lakeformation_resource" "data_location" {
   role_arn = aws_iam_role.glue_role.arn
 }
 
+
 # 🔐 DATA_LOCATION_ACCESS permission
 resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
   principal   = aws_iam_role.glue_role.arn
@@ -135,7 +136,10 @@ resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
     arn = aws_lakeformation_resource.data_location.arn
   }
 
-  depends_on = [aws_lakeformation_resource.data_location]
+  depends_on = [
+    aws_glue_catalog_database.coinbase_db,
+    aws_lakeformation_resource.data_location
+  ]
 }
 
 # 🔐 Database-level permissions
@@ -146,6 +150,12 @@ resource "aws_lakeformation_permissions" "crawler_database_perm" {
   database {
     name = aws_glue_catalog_database.coinbase_db.name
   }
+
+  depends_on = [
+    aws_glue_catalog_database.coinbase_db,
+    aws_lakeformation_resource.data_location
+  ]
+  
 }
 
 # 🔐 Catalog permission (NEW)
@@ -153,6 +163,7 @@ resource "aws_lakeformation_permissions" "crawler_catalog_perm" {
   principal         = aws_iam_role.glue_role.arn
   permissions       = ["DESCRIBE"]
   catalog_resource  = true
+  
   depends_on = [
     aws_glue_catalog_database.coinbase_db,
     aws_lakeformation_resource.data_location
