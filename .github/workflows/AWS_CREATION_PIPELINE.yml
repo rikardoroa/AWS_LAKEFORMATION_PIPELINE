@@ -37,5 +37,5 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -target=module.glue_catalog_utils.aws_lakeformation_data_lake_settings.admins -auto-approve tfplan
         working-directory: ./aws_resources
