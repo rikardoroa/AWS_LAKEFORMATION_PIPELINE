@@ -74,7 +74,15 @@ resource "aws_lakeformation_permissions" "crawler_database_perm" {
 #   schedule = "cron(0/6 * * * ? *)"
 # }
 
+# 🔹 Clasificador JSON para Glue
+resource "aws_glue_classifier" "json_classifier" {
+  name            = "coinbase_json_classifier"
+  json_classifier {
+    json_path = "$"
+  }
+}
 
+# 🔹 Crawler con referencia al clasificador
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
@@ -85,7 +93,8 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     path = "s3://${var.bucket_name}/coinbase/ingest/"
   }
 
-  # Reconfigurar política de recrawling
+  classifiers = [aws_glue_classifier.json_classifier.name]
+
   recrawl_policy {
     recrawl_behavior = "CRAWL_EVERYTHING"
   }
@@ -95,17 +104,12 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     delete_behavior = "LOG"
   }
 
-  # 🔄 Ejecutar cada 6 minutos
-  schedule = "cron(0/6 * * * ? *)"
-
-  # 🔍 Clasificación manual (válida para Glue Crawler)
   configuration = jsonencode({
     Version = 1.0
-    CrawlerOutput = {
-      Partitions = { AddOrUpdateBehavior = "InheritFromTable" }
+    Grouping = {
+      TableGroupingPolicy = "CombineCompatibleSchemas"
     }
-    Grouping = { TableGroupingPolicy = "CombineCompatibleSchemas" }
-    # 👇 Esta línea fuerza a Glue a interpretar como JSON
-    CustomClassifier = "json"
   })
+
+  schedule = "cron(0/6 * * * ? *)"
 }
