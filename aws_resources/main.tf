@@ -56,6 +56,7 @@ module "kinesis_utils" {
   source      = "./kinesis_module"
   bucket_arn  = module.bucket_utils.bucket_arn
   kms_key_arn = module.bucket_utils.kms_key_arn
+  lambda_arn  =  module.lambda_utils.lambda_arn
 }
 
 # --- 3. Lambda (only depends on bucket and kinesis) ---

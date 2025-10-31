@@ -11,6 +11,10 @@ variable "firehose_name" {
   default = "coinbase-firehose"
 }
 
+variable "lambda_arn"{
+    type = string
+}
+
 # variable "lambda_role" {
 #     type = string
 # }
