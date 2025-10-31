@@ -171,8 +171,8 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
     kms_key_arn        = var.kms_key_arn
 
     # Firehose requires error_output_prefix if prefix uses dynamic expressions
-    prefix              = "raw/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
-    error_output_prefix = "errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    prefix              = "coinbase/raw/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    error_output_prefix = "coinbase/raw/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
 
     buffering_interval = 60
     buffering_size     = 64
