@@ -108,7 +108,7 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
         type = "MetadataExtraction"
         parameters {
           parameter_name  = "MetadataExtractionQuery"
-          parameter_value = "{partition_date: .date}"
+          parameter_value = "{partition_date: (.date | split(\" \")[0])}"
         }
         parameters {
           parameter_name  = "JsonParsingEngine"
