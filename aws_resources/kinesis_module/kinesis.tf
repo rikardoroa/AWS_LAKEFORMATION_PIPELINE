@@ -161,7 +161,7 @@ resource "aws_iam_role_policy" "firehose_policy" {
 
 # --- Kinesis Firehose Delivery Stream ---
 resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
-  name        = "coinbase-firehose"
+  name        = var.firehose_name
   destination = "extended_s3"
 
   extended_s3_configuration {
@@ -179,7 +179,7 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
 
     cloudwatch_logging_options {
       enabled         = true
-      log_group_name  = "/aws/kinesisfirehose/${aws_kinesis_firehose_delivery_stream.coinbase_firehose.name}"
+      log_group_name  = "/aws/kinesisfirehose/${var.firehose_name}"
       log_stream_name = "S3Delivery"
     }
   }
