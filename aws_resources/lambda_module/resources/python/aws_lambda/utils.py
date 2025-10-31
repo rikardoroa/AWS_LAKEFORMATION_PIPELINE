@@ -35,6 +35,7 @@ class DBUtils:
         self.glue_client = boto3.client("glue")
         self.table_name = os.getenv("table")
         self.database_name = os.getenv("database")
+        self.bucket = os.getenv("bucket")
     
     def create_data_catalog_table(self,df):
         """
