@@ -75,7 +75,7 @@ resource "aws_iam_role_policy" "glue_lakeformation_policy" {
 # 🧑‍💼 4️⃣ Data Lake Settings - Glue + Lambda admins
 ##########################################
 resource "aws_lakeformation_data_lake_settings" "default" {
-  catalog_id = local.catalog_id
+  catalog_id = data.aws_caller_identity.current.account_id
 
   admins = [
     aws_iam_role.glue_role.arn,
