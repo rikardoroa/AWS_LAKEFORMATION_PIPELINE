@@ -23,9 +23,6 @@ module "lambda_utils" {
   crawler_role = module.glue_catalog_utils.crawler_role
   data_location = module.glue_catalog_utils.data_location
   
-  depends_on = [
-    module.glue_catalog_utils  # Asegurar que data lake settings existe primero
-  ]
   # ⚠️ Do NOT reference eventbridge or glue here
 }
 
