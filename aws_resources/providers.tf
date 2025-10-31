@@ -31,12 +31,10 @@ provider "aws" {
   region = "us-east-2"
 
   assume_role {
-    role_arn     =  module.lambda_utils.lambda_role
+    role_arn     = "arn:aws:iam::163257074638:role/iam_dev_role_cb_api"
     session_name = "terraform-lakeformation"
   }
 }
-
-
 # provider "aws" {
 #   region = "us-east-2"
 
