@@ -1,3 +1,4 @@
+
 # # --- Get current AWS account and region ---
 # data "aws_caller_identity" "current" {}
 # data "aws_region" "current" {}
@@ -6,7 +7,6 @@
 # resource "aws_iam_role" "iam_dev_role_cb_api" {
 #   name = "iam_dev_role_cb_api"
 
-#   # Trust policy: allows Lambda service to assume this role
 #   assume_role_policy = jsonencode({
 #     Version = "2012-10-17",
 #     Statement = [{
@@ -19,7 +19,6 @@
 
 # # --- IAM Policy for Lambda function ---
 # data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
-#   # Allow CloudWatch Logs access
 #   statement {
 #     sid    = "CloudWatchLogging"
 #     effect = "Allow"
@@ -35,7 +34,6 @@
 #     ]
 #   }
 
-#   # Allow access to S3 bucket (if Lambda writes output data)
 #   statement {
 #     sid    = "S3Access"
 #     effect = "Allow"
@@ -49,7 +47,6 @@
 #       "arn:aws:s3:::${var.bucket_name}/*",
 #     ]
 #   }
-
 
 #   statement {
 #     sid    = "GlueCatalogAccess"
@@ -67,8 +64,6 @@
 #     ]
 #   }
 
-
-#   # Allow KMS encryption/decryption
 #   statement {
 #     sid    = "KMSAccess"
 #     effect = "Allow"
@@ -109,94 +104,15 @@
 #   }
 # }
 
-# # resource "aws_lakeformation_data_lake_settings" "admins" {
-# #   admins = [
-# #     aws_iam_role.iam_dev_role_cb_api.arn,
-# #     var.crawler_role
-# #   ]
-# # }
-
-
-# # # --- Attach inline policy to Lambda role ---
-# # resource "aws_iam_role_policy" "pipeline_dev_policy_attachment_cb_api" {
-# #   name   = "pipeline_dev_policy_cb_api"
-# #   role   = aws_iam_role.iam_dev_role_cb_api.id
-# #   policy = data.aws_iam_policy_document.pipeline_dev_policy_cb_api.json
-# # }
-
-# # # --- Lake Formation: Database permissions
-# # resource "aws_lakeformation_permissions" "lambda_db_permissions" {
-# #   principal   = aws_iam_role.iam_dev_role_cb_api.arn
-# #   permissions = ["CREATE_TABLE", "ALTER", "DESCRIBE"]
-
-# #   database {
-# #     name = var.database
-# #   }
-# #    depends_on = [
-# #     aws_lakeformation_data_lake_settings.admins
-# #   ]
-# # }
-
-
-# # resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
-# #   principal   = aws_iam_role.iam_dev_role_cb_api.arn
-# #   permissions = ["DATA_LOCATION_ACCESS"]
-
-# #   data_location {
-# #     arn = var.data_location
-# #   }
-
-# #  depends_on = [
-# #     aws_lakeformation_data_lake_settings.admins,
-# #     aws_lakeformation_permissions.lambda_db_permissions
-# #   ]
-# # }
-
-
-
-
-# # # Usa wildcard por database (aplica a todas las tablas presentes y futuras)
-# # resource "aws_lakeformation_permissions" "lambda_db_select" {
-# #   principal   = aws_iam_role.iam_dev_role_cb_api.arn
-# #   permissions = ["DESCRIBE", "SELECT"]
-
-# #   #Compatible con todas las versiones de Terraform AWS provider
-# #   table {
-# #     database_name = var.database
-# #     name          = "*"
-# #   }
-
-# #   depends_on = [
-# #     aws_lakeformation_permissions.lambda_db_permissions
-# #   ]
-# # }
-
-
-
-# # Actualizar esta sección (línea ~123)
-# resource "aws_lakeformation_data_lake_settings" "admins" {
-#   admins = [
-#     aws_iam_role.iam_dev_role_cb_api.arn,
-#     var.crawler_role
-#   ]
-  
-#   # Evitar conflictos con otras configuraciones
-#   create_database_default_permissions {
-#     permissions = []
-#     principal {
-#       data_lake_principal_identifier = "IAM_ALLOWED_PRINCIPALS"
-#     }
-#   }
-  
-#   create_table_default_permissions {
-#     permissions = []
-#     principal {
-#       data_lake_principal_identifier = "IAM_ALLOWED_PRINCIPALS"
-#     }
-#   }
+# # Attach inline policy to Lambda role
+# resource "aws_iam_role_policy" "pipeline_dev_policy_attachment_cb_api" {
+#   name   = "pipeline_dev_policy_cb_api"
+#   role   = aws_iam_role.iam_dev_role_cb_api.id
+#   policy = data.aws_iam_policy_document.pipeline_dev_policy_cb_api.json
 # }
 
-# # Database permissions
+
+# # Database permissions - SIN depender de data_lake_settings local
 # resource "aws_lakeformation_permissions" "lambda_db_permissions" {
 #   principal   = aws_iam_role.iam_dev_role_cb_api.arn
 #   permissions = ["CREATE_TABLE", "ALTER", "DESCRIBE"]
@@ -204,10 +120,14 @@
 #   database {
 #     name = var.database
 #   }
+#   lifecycle {
+#     precondition {
+#       condition     = var.crawler_role != ""
+#       error_message = "Lake Formation admin (crawler_role) must be configured first"
+#     }
+#   }
   
-#   depends_on = [
-#     aws_lakeformation_data_lake_settings.admins
-#   ]
+#   # El data_lake_settings se gestiona en el módulo glue_catalog
 # }
 
 # # Data location access
@@ -218,19 +138,11 @@
 #   data_location {
 #     arn = var.data_location
 #   }
-
-#   depends_on = [
-#     aws_lakeformation_data_lake_settings.admins
-#   ]
 # }
 
-
-
-# --- Get current AWS account and region ---
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
-# --- IAM Role for Lambda function ---
 resource "aws_iam_role" "iam_dev_role_cb_api" {
   name = "iam_dev_role_cb_api"
 
@@ -244,7 +156,6 @@ resource "aws_iam_role" "iam_dev_role_cb_api" {
   })
 }
 
-# --- IAM Policy for Lambda function ---
 data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
   statement {
     sid    = "CloudWatchLogging"
@@ -331,38 +242,8 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
   }
 }
 
-# Attach inline policy to Lambda role
 resource "aws_iam_role_policy" "pipeline_dev_policy_attachment_cb_api" {
   name   = "pipeline_dev_policy_cb_api"
   role   = aws_iam_role.iam_dev_role_cb_api.id
   policy = data.aws_iam_policy_document.pipeline_dev_policy_cb_api.json
-}
-
-
-# Database permissions - SIN depender de data_lake_settings local
-resource "aws_lakeformation_permissions" "lambda_db_permissions" {
-  principal   = aws_iam_role.iam_dev_role_cb_api.arn
-  permissions = ["CREATE_TABLE", "ALTER", "DESCRIBE"]
-
-  database {
-    name = var.database
-  }
-  lifecycle {
-    precondition {
-      condition     = var.crawler_role != ""
-      error_message = "Lake Formation admin (crawler_role) must be configured first"
-    }
-  }
-  
-  # El data_lake_settings se gestiona en el módulo glue_catalog
-}
-
-# Data location access
-resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
-  principal   = aws_iam_role.iam_dev_role_cb_api.arn
-  permissions = ["DATA_LOCATION_ACCESS"]
-
-  data_location {
-    arn = var.data_location
-  }
 }
