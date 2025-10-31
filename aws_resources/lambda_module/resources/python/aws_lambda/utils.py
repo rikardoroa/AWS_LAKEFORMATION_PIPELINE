@@ -22,57 +22,57 @@ class DBUtils:
         self.database_name = os.getenv("database")
         self.bucket = os.getenv("bucket")
     
-     def create_data_catalog_table(self):
-    """
-    Creates or updates a Glue Catalog table manually (without crawler),
-    fully compatible with Lake Formation and dynamic partitions.
-    """
-    try:
-        table_input = {
-            "Name": self.table,
-            "Description": "Automatically generated Glue table from Lambda (Coinbase Prices)",
-            "StorageDescriptor": {
-                "Columns": [
-                    {"Name": "amount", "Type": "string"},
-                    {"Name": "base", "Type": "string"},
-                    {"Name": "currency", "Type": "string"},
-                    {"Name": "date", "Type": "string"},
-                    {"Name": "currency_id", "Type": "string"},
-                    {"Name": "timestamp", "Type": "bigint"},
-                ],
-                "Location": f"s3://{self.bucket}/coinbase/ingest/",
-                "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
-                "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
-                "SerdeInfo": {
-                    "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
-                    "Parameters": {"serialization.format": "1"},
-                },
-                "Compressed": True,
-            },
-            "PartitionKeys": [
-                {"Name": "partition_date", "Type": "string"},
-                {"Name": "year", "Type": "string"},
-                {"Name": "month", "Type": "string"},
-                {"Name": "day", "Type": "string"},
-                {"Name": "hour", "Type": "string"},
-            ],
-            "TableType": "EXTERNAL_TABLE",
-            "Parameters": {"classification": "json"},
-        }
-
-        # Check if the table already exists
+    def create_data_catalog_table(self):
+        """
+        Creates or updates a Glue Catalog table manually (without crawler),
+        fully compatible with Lake Formation and dynamic partitions.
+        """
         try:
-            self.glue.get_table(DatabaseName=self.database, Name=self.table)
-            logger.info(f"Table {self.table} already exists, attempting to update.")
-            self.glue.update_table(DatabaseName=self.database, TableInput=table_input)
-        except self.glue.exceptions.EntityNotFoundException:
-            logger.info(f"Creating table {self.table} in database {self.database}")
-            self.glue.create_table(DatabaseName=self.database, TableInput=table_input)
+            table_input = {
+                "Name": self.table,
+                "Description": "Automatically generated Glue table from Lambda (Coinbase Prices)",
+                "StorageDescriptor": {
+                    "Columns": [
+                        {"Name": "amount", "Type": "string"},
+                        {"Name": "base", "Type": "string"},
+                        {"Name": "currency", "Type": "string"},
+                        {"Name": "date", "Type": "string"},
+                        {"Name": "currency_id", "Type": "string"},
+                        {"Name": "timestamp", "Type": "bigint"},
+                    ],
+                    "Location": f"s3://{self.bucket}/coinbase/ingest/",
+                    "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+                    "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+                    "SerdeInfo": {
+                        "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
+                        "Parameters": {"serialization.format": "1"},
+                    },
+                    "Compressed": True,
+                },
+                "PartitionKeys": [
+                    {"Name": "partition_date", "Type": "string"},
+                    {"Name": "year", "Type": "string"},
+                    {"Name": "month", "Type": "string"},
+                    {"Name": "day", "Type": "string"},
+                    {"Name": "hour", "Type": "string"},
+                ],
+                "TableType": "EXTERNAL_TABLE",
+                "Parameters": {"classification": "json"},
+            }
 
-        self.ensure_permissions_on_existing_table()
+            # Check if the table already exists
+            try:
+                self.glue.get_table(DatabaseName=self.database, Name=self.table)
+                logger.info(f"Table {self.table} already exists, attempting to update.")
+                self.glue.update_table(DatabaseName=self.database, TableInput=table_input)
+            except self.glue.exceptions.EntityNotFoundException:
+                logger.info(f"Creating table {self.table} in database {self.database}")
+                self.glue.create_table(DatabaseName=self.database, TableInput=table_input)
 
-    except Exception as e:
-        logger.error(f"Failed to create Glue table: {e}")
+            self.ensure_permissions_on_existing_table()
+
+        except Exception as e:
+            logger.error(f"Failed to create Glue table: {e}")
 
 
     def ensure_permissions_on_existing_table(self):
