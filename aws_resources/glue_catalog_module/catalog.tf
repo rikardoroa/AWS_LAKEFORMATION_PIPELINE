@@ -174,7 +174,7 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     delete_behavior = "LOG"
   }
 
-  # ⚙️ Configuración avanzada para archivos GZIP particionados
+  # ✅ Configuración válida para Glue Crawler (sin CompressionType)
   configuration = jsonencode({
     Version  = 1.0,
     Grouping = {
@@ -182,8 +182,7 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     },
     CrawlerOutput = {
       Partitions = { AddOrUpdateBehavior = "InheritFromTable" }
-    },
-    CompressionType = "gzip"
+    }
   })
 
   # ⏱️ Ejecuta cada 6 minutos
@@ -198,6 +197,7 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     aws_glue_classifier.json_gzip_classifier
   ]
 }
+
 
 ##########################################
 # 📜 🔟 Permisos adicionales de Logs
