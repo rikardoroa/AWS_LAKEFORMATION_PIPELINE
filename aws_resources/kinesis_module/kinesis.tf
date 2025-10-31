@@ -179,7 +179,7 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
 
     cloudwatch_logging_options {
       enabled         = true
-      log_group_name  = "/aws/kinesisfirehose/${self.name}"
+      log_group_name  = "/aws/kinesisfirehose/${aws_kinesis_firehose_delivery_stream.coinbase_firehose.name}"
       log_stream_name = "S3Delivery"
     }
   }
