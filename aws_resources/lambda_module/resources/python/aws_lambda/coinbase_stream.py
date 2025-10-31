@@ -52,7 +52,7 @@ class CoinBaseStream:
             
             logger.info(f"Successfully sent {records_sent} records to Kinesis")
             
-            self.ensure_permissions_on_existing_table()
+            self.utils.ensure_permissions_on_existing_table()
             
 
         except Exception as e:
