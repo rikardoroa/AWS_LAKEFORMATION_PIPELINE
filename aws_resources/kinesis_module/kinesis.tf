@@ -21,7 +21,8 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
     kms_key_arn        = var.kms_key_arn
     
     buffering_size     = 1   
-    buffering_interval = 60   
+    buffering_interval = 60
+    file_extension = ".json"  
   }
 
   kinesis_source_configuration {
