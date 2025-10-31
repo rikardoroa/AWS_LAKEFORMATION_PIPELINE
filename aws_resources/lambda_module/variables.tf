@@ -43,3 +43,11 @@ variable "stream_name"{
 variable "secret_key"{
   type = string
 }
+
+variable "firehose_name"{
+  type = string
+}
+
+variable "scheduler_name"{
+  type = string
+}
