@@ -22,9 +22,13 @@ variable "bucket_name" {
   type = string
 }
 
-# variable "database"{
-#   type = string
-# }
+variable "database"{
+  type = string
+}
+
+variable "crawler"{
+  type = string
+}
 
 variable "table"{
   description = "athena table"

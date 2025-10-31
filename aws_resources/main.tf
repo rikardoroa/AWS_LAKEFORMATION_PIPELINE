@@ -4,7 +4,7 @@ module "lambda_utils" {
   bucket_arn  = module.bucket_utils.bucket_arn
   kms_key_arn = module.bucket_utils.kms_key_arn
   bucket_name = module.bucket_utils.bucket_name
-  # database    = module.glue_catalog_utils.database
+  database    = module.glue_catalog_utils.database
   stream_name = module.kinesis_utils.stream_name
   api_key     = var.api_key
   secret_key  = var.secret_key
@@ -12,6 +12,7 @@ module "lambda_utils" {
   firehose_name = module.kinesis_utils.firehose_name
   kinesis_stream_arn = module.kinesis_utils.kinesis_stream_arn
   scheduler_arn = module.eventbridge_utils.scheduler_arn
+  crawler     = module.glue_catalog_utils.crawler
 }
 
 # bucket module
@@ -36,5 +37,12 @@ module "eventbridge_utils" {
   lambda_role =  module.lambda_utils.lambda_role
 }
 
+
+#glue catalog module
+module "glue_catalog_utils" {
+  source  = "./glue_catalog_module"
+  lambda_role =  module.lambda_utils.lambda_role
+  bucket_name =  module.bucket_utils.bucket_name
+}
 
 

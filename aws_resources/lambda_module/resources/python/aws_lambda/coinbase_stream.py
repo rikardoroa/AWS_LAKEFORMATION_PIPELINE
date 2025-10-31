@@ -6,7 +6,7 @@ from datetime import datetime
 import uuid
 import logging
 import pandas as pd
-
+from utils import DBUtils
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -20,6 +20,7 @@ class CoinBaseStream:
     def __init__(self):
         self.kinesis_client = boto3.client('kinesis')
         self.coin_base_price = CoinBasePrice()
+        self.utils = DBUtils()
    
 
     def coinbase_api_calls(self):
@@ -43,6 +44,9 @@ class CoinBaseStream:
                     PartitionKey=prices['base'],
                 )
                 prices_payload.append(prices)
+            
+            currencies_df = pd.DataFrame(prices_payload)
+            self.utils.create_data_catalog_table(currencies_df)
 
         except Exception as e:
             logger.error(f'can not generate the kinesis stream, please verify the configuration:{e}')

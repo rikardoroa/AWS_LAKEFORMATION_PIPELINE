@@ -85,7 +85,7 @@ resource "aws_lambda_function" "lambda_function" {
       stream_name = var.stream_name
       secret_key = var.secret_key
       api_key  = var.api_key
-      # database = var.database
+      database = var.database
       bucket   = var.bucket_name
       table    = var.table
       role     = aws_iam_role.iam_dev_role_cb_api.arn

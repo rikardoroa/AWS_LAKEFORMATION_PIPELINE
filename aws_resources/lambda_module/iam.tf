@@ -78,6 +78,49 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       var.kms_key_arn
     ]
   }
+  statement {
+  sid    = "GlueAccess"
+  effect = "Allow"
+  actions = [
+    "glue:CreateDatabase",
+    "glue:GetDatabase",
+    "glue:GetDatabases",
+    "glue:CreateTable",
+    "glue:UpdateTable",
+    "glue:GetTable",
+    "glue:GetTables",
+    "glue:DeleteTable",
+    "glue:GetPartition",
+    "glue:GetPartitions",
+    "glue:BatchCreatePartition",
+    "glue:BatchDeletePartition",
+    "glue:BatchGetPartition",
+    "glue:GetCrawler",
+    "glue:GetCrawlers",
+    "glue:StartCrawler",
+    "glue:UpdateCrawler",
+    "glue:UpdatePartition",
+    "glue:CreateCrawler",
+    "glue:GetCatalogImportStatus",
+    "lakeformation:GetDataAccess",
+    "lakeformation:GrantPermissions",
+    "lakeformation:RevokePermissions",
+    "lakeformation:ListPermissions",
+    "lakeformation:GetEffectivePermissionsForPrincipal",
+    "lakeformation:GetResourceLFTags",
+    "lakeformation:ListLFTags",
+    "lakeformation:GetLFTag",
+    "lakeformation:SearchDatabasesByLFTags",
+    "lakeformation:SearchTablesByLFTags"
+  ]
+  resources = [
+    "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
+    "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/${var.database}",
+    "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.database}/*",
+    "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:crawler/${var.crawler}",
+    "arn:aws:lakeformation:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog:${data.aws_caller_identity.current.account_id}"
+  ]
+}
 }
 
 # Attach Inline Policy to Role
