@@ -229,17 +229,14 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
     ]
   }
 
+  # AGREGAR PERMISOS DE LAKE FORMATION
   statement {
-    sid    = "LakeFormationAccess"
+    sid    = "LakeFormationFullAccess"
     effect = "Allow"
     actions = [
-      "lakeformation:ListPermissions",
-      "lakeformation:GrantPermissions",
-      "lakeformation:GetDataAccess",
-      "lakeformation:GetEffectivePermissionsForPath"
+      "lakeformation:*"
     ]
     resources = ["*"]
-  }
 }
 
 resource "aws_iam_role_policy" "pipeline_dev_policy_attachment_cb_api" {

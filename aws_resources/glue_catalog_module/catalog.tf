@@ -64,13 +64,9 @@ resource "aws_iam_role_policy" "glue_lakeformation_policy" {
   })
 }
 
-# 4️⃣ Configurar Data Lake Settings - INCLUYE LAMBDA ROLE
+# 4️⃣ SOLO Glue como admin inicialmente
 resource "aws_lakeformation_data_lake_settings" "default" {
-  # Ambos roles son administradores
-  admins = [
-    aws_iam_role.glue_role.arn,
-    var.lambda_role  # Lambda también debe ser admin
-  ]
+  admins = [aws_iam_role.glue_role.arn]
   
   depends_on = [
     aws_iam_role.glue_role,
@@ -106,22 +102,7 @@ resource "aws_lakeformation_resource" "data_location" {
   ]
 }
 
-# 8️⃣ Otorgar permisos a Lambda sobre TODAS las tablas (wildcard)
-resource "aws_lakeformation_permissions" "lambda_all_tables" {
-  principal   = var.lambda_role
-  permissions = ["SELECT", "DESCRIBE", "ALTER"]
-
-  table {
-    database_name = aws_glue_catalog_database.coinbase_db.name
-    wildcard      = true  # Permisos sobre TODAS las tablas
-  }
-
-  depends_on = [
-    aws_glue_catalog_database.coinbase_db
-  ]
-}
-
-# 9️⃣ JSON classifier
+# 8️⃣ JSON classifier
 resource "aws_glue_classifier" "json_classifier" {
   name = "coinbase_json_classifier"
 
@@ -130,14 +111,14 @@ resource "aws_glue_classifier" "json_classifier" {
   }
 }
 
-# 🔟 Glue crawler - SIN PREFIJO Y CON NOMBRE ESPECÍFICO
+# 9️⃣ Glue crawler - SIN PREFIJO
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
   database_name = aws_glue_catalog_database.coinbase_db.name
   description   = "Crawler que detecta archivos JSON GZIP particionados"
 
-  table_prefix = ""  # Sin prefijo para que cree la tabla exacta
+  table_prefix = ""  # Sin prefijo
 
   s3_target {
     path = "s3://${var.bucket_name}/coinbase/ingest/"
@@ -159,12 +140,6 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     Grouping = { 
       TableGroupingPolicy = "CombineCompatibleSchemas"
     }
-    CrawlerOutput = {
-      Tables = { 
-        AddOrUpdateBehavior = "MergeNewColumns",
-        TableName = "coinbase_currency_prices"  # Nombre específico
-      }
-    }
   })
 
   schedule = "cron(0/6 * * * ? *)"
@@ -172,12 +147,11 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   depends_on = [
     aws_glue_catalog_database.coinbase_db,
     aws_iam_role_policy.glue_s3_policy,
-    aws_iam_role_policy.glue_lakeformation_policy,
-    aws_lakeformation_permissions.lambda_all_tables
+    aws_iam_role_policy.glue_lakeformation_policy
   ]
 }
 
-# 1️⃣1️⃣ Logs policy
+# 🔟 Logs policy
 data "aws_iam_policy_document" "glue_logs_extra" {
   statement {
     effect = "Allow"
@@ -201,7 +175,7 @@ resource "aws_iam_role_policy_attachment" "glue_logs_attach" {
   policy_arn = aws_iam_policy.glue_logs_extra.arn
 }
 
-# 1️⃣2️⃣ Verificación del bucket S3
+# 1️⃣1️⃣ Verificación del bucket S3
 data "aws_s3_bucket" "main" {
   bucket = var.bucket_name
 }
