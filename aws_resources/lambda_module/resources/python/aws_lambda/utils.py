@@ -62,12 +62,12 @@ class DBUtils:
 
             # Check if the table already exists
             try:
-                self.glue.get_table(DatabaseName=self.database, Name=self.table_name)
+                self.glue_client.get_table(DatabaseName=self.database, Name=self.table_name)
                 logger.info(f"Table {self.table} already exists, attempting to update.")
-                self.glue.update_table(DatabaseName=self.database, TableInput=table_input)
-            except self.glue.exceptions.EntityNotFoundException:
+                self.glue_client.update_table(DatabaseName=self.database, TableInput=table_input)
+            except self.glue_client.exceptions.EntityNotFoundException:
                 logger.info(f"Creating table {self.table_name} in database {self.database}")
-                self.glue.create_table(DatabaseName=self.database, TableInput=table_input)
+                self.glue_client.create_table(DatabaseName=self.database, TableInput=table_input)
 
             self.ensure_permissions_on_existing_table()
 
