@@ -22,7 +22,7 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
     
     # Prefix with dynamic partitioning - uses special placeholders
     # !{partitionKeyFromQuery:xxx} or !{timestamp:xxx}
-    prefix = "coinbase/ingest/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    prefix = "coinbase/ingest/base=!{partitionKeyFromQuery:base}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
     error_output_prefix = "coinbase/errors/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/!{firehose:error-output-type}/"
     
     buffering_size     = 1   
