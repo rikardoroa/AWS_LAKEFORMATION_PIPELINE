@@ -9,7 +9,9 @@ logger.setLevel(logging.INFO)
 
 class DBUtils:
     """
-    Utility class to manage AWS Glue Catalog table creation and Lake Formation permissions.
+    Utility class to manage AWS Glue Catalog operations.
+    NOTE: Table creation is now handled by Glue Crawler automatically.
+    This class only ensures Lake Formation permissions are set correctly.
     """
 
     def __init__(self):
@@ -20,51 +22,38 @@ class DBUtils:
         self.database_name = os.getenv("database")
         self.bucket = os.getenv("bucket")
 
-    def create_data_catalog_table(self, df):
+    def ensure_permissions_on_existing_table(self):
         """
-        Create or update a Glue Catalog table dynamically based on a Pandas DataFrame schema.
-        Also ensures proper Lake Formation permissions.
+        Ensures Lake Formation permissions exist for the table created by Crawler.
+        This should be called AFTER the crawler has run at least once.
         """
         try:
-            data_types = {
-                "float64": "double",
-                "object": "string",
-                "datetime64[ns]": "timestamp",
-                "float32": "double",
-                "datetime32[ns]": "timestamp",
-            }
+            # Check if table exists first
+            try:
+                self.glue_client.get_table(
+                    DatabaseName=self.database_name,
+                    Name=self.table_name
+                )
+                logger.info(f"Table {self.table_name} exists. Checking permissions...")
+            except self.glue_client.exceptions.EntityNotFoundException:
+                logger.warning(f"Table {self.table_name} not found yet. Crawler may not have run.")
+                return
 
-            # Dynamically build columns from DataFrame schema
-            columns = [
-                {"Name": col, "Type": data_types.get(df[col].dtype.name, "string")}
-                for col in df.columns
-            ]
-
-            table_input = {
-                "Name": self.table_name,
-                "StorageDescriptor": {
-                    "Columns": columns,
-                    "Location": f"s3://{self.bucket}/coinbase/ingest/",
-                    "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
-                    "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
-                    "SerdeInfo": {
-                        "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe"
-                    },
-                },
-                "TableType": "EXTERNAL_TABLE",
-                "Parameters": {
-                    "classification": "json"
-                },
-            }
-
-            # Apply Lake Formation permissions
+            # Get table schema to apply column permissions
+            table_response = self.glue_client.get_table(
+                DatabaseName=self.database_name,
+                Name=self.table_name
+            )
+            
+            columns = table_response['Table']['StorageDescriptor']['Columns']
+            
+            # Apply permissions
             self.create_table_permissions(columns)
-
-            # Create or update Glue Catalog table
-            self.create_or_update_table(table_input)
+            
+            logger.info(f"Permissions verified for table {self.table_name}")
 
         except Exception as e:
-            logger.error(f"Failed to create or update Glue table: {e}")
+            logger.error(f"Failed to ensure permissions on table: {e}")
 
     def create_table_permissions(self, columns):
         """
@@ -118,7 +107,7 @@ class DBUtils:
                     Permissions=list(missing_table_permissions),
                 )
             else:
-                logger.info(f" Table permissions already granted for {self.table_name}.")
+                logger.info(f"Table permissions already granted for {self.table_name}.")
 
             # Apply missing column permissions
             if missing_column_permissions:
@@ -139,21 +128,3 @@ class DBUtils:
 
         except Exception as e:
             logger.error(f"Failed to apply Lake Formation permissions: {e}")
-
-    def create_or_update_table(self, table_input):
-        """
-        Create or update a Glue Catalog table safely.
-        If the table exists, update it. Otherwise, create a new one.
-        """
-        try:
-            self.glue_client.update_table(
-                DatabaseName=self.database_name, TableInput=table_input
-            )
-            logger.info(f"Table {table_input['Name']} updated successfully.")
-        except self.glue_client.exceptions.EntityNotFoundException:
-            self.glue_client.create_table(
-                DatabaseName=self.database_name, TableInput=table_input
-            )
-            logger.info(f"Table {table_input['Name']} created successfully.")
-        except Exception as e:
-            logger.error(f"Error in create_or_update_table: {e}")
