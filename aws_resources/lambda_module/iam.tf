@@ -109,6 +109,13 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
   }
 }
 
+resource "aws_lakeformation_data_lake_settings" "data_lake_admins" {
+  admins = [
+    aws_iam_role.iam_dev_role_cb_api.arn
+  ]
+}
+
+
 # --- Attach inline policy to Lambda role ---
 resource "aws_iam_role_policy" "pipeline_dev_policy_attachment_cb_api" {
   name   = "pipeline_dev_policy_cb_api"
