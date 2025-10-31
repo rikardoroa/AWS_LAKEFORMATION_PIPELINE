@@ -55,16 +55,41 @@ resource "aws_lakeformation_permissions" "crawler_database_perm" {
 }
 
 # Crawler (apunta al prefijo donde Firehose escribe)
+# resource "aws_glue_crawler" "coinbase_s3_crawler" {
+#   name          = "coinbase_s3_crawler"
+#   role          = aws_iam_role.glue_role.arn
+#   database_name = aws_glue_catalog_database.coinbase_db.name
+
+#   s3_target {
+#     path = "s3://${var.bucket_name}/coinbase/ingest/"
+#   }
+
+#   recrawl_policy { recrawl_behavior = "CRAWL_EVERYTHING" }
+
+#   schema_change_policy {
+#     update_behavior = "UPDATE_IN_DATABASE"
+#     delete_behavior = "LOG"
+#   }
+
+#   schedule = "cron(0/6 * * * ? *)"
+# }
+
+
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
   database_name = aws_glue_catalog_database.coinbase_db.name
 
+  # 🔍 Define clasificación explícita y recorre todas las particiones base/year/month/day/hour
   s3_target {
-    path = "s3://${var.bucket_name}/coinbase/ingest/"
+    path           = "s3://${var.bucket_name}/coinbase/ingest/"
+    classification = "json"
+    sample_size    = 10
   }
 
-  recrawl_policy { recrawl_behavior = "CRAWL_EVERYTHING" }
+  recrawl_policy {
+    recrawl_behavior = "CRAWL_EVERYTHING"
+  }
 
   schema_change_policy {
     update_behavior = "UPDATE_IN_DATABASE"
