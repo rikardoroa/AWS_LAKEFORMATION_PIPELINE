@@ -242,7 +242,7 @@ resource "aws_lakeformation_permissions" "crawler_database_perms" {
 
 resource "aws_lakeformation_permissions" "lambda_glue_create" {
   catalog_id = data.aws_caller_identity.current.account_id
-  principal  = aws_iam_role.iam_dev_role_cb_api.arn
+  principal  = var.lambda_role
   permissions = ["CREATE_TABLE"]
 
   resource {
