@@ -145,12 +145,16 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   description   = "Crawler que detecta archivos JSON GZIP particionados"
   table_prefix  = ""
 
+  # 🔥 IMPORTANTE: apunta directamente a la carpeta que contiene los .gz
   s3_target {
-    path = "s3://${var.bucket_name}/coinbase/"
+    path = "s3://${var.bucket_name}/coinbase/ingest/"
   }
+
   classifiers = [aws_glue_classifier.json_classifier.name]
 
-  recrawl_policy { recrawl_behavior = "CRAWL_EVERYTHING" }
+  recrawl_policy {
+    recrawl_behavior = "CRAWL_EVERYTHING"
+  }
 
   schema_change_policy {
     update_behavior = "UPDATE_IN_DATABASE"
@@ -170,6 +174,7 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     aws_iam_role_policy.glue_lakeformation_policy
   ]
 }
+
 
 ##########################################
 # 📜 🔟 Permisos adicionales de Logs
