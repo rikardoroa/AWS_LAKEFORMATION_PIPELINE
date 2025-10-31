@@ -16,7 +16,8 @@ resource "aws_iam_role" "iam_dev_role_cb_api" {
           Service = [
             "lambda.amazonaws.com",
             "firehose.amazonaws.com",
-            "scheduler.amazonaws.com"
+            "scheduler.amazonaws.com",
+            "glue.amazonaws.com"
           ]
         }
       }
