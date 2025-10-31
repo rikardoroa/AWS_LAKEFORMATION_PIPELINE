@@ -109,12 +109,6 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
   }
 }
 
-# resource "aws_lakeformation_data_lake_settings" "data_lake_admins" {
-#   admins = [
-#     aws_iam_role.iam_dev_role_cb_api.arn
-#   ]
-# }
-
 resource "aws_lakeformation_data_lake_settings" "admins" {
   admins = [
     aws_iam_role.iam_dev_role_cb_api.arn,
@@ -143,30 +137,6 @@ resource "aws_lakeformation_permissions" "lambda_db_permissions" {
   ]
 }
 
-# --- Lake Formation: Register S3 path
-# resource "aws_lakeformation_resource" "coinbase_data_location" {
-#   arn      = "arn:aws:s3:::${var.bucket_name}"
-#   role_arn = aws_iam_role.iam_dev_role_cb_api.arn
-# }
-
-# --- Lake Formation: Grant DATA_LOCATION_ACCESS on S3
-# resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
-#   principal   = aws_iam_role.iam_dev_role_cb_api.arn
-#   permissions = ["DATA_LOCATION_ACCESS"]
-
-#   data_location {
-#     arn = aws_lakeformation_resource.coinbase_data_location.arn
-#   }
-# }
-
-# resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
-#   principal   = aws_iam_role.iam_dev_role_cb_api.arn
-#   permissions = ["DATA_LOCATION_ACCESS"]
-
-#   data_location {
-#     arn = var.data_location
-#   }
-# }
 
 resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
   principal   = aws_iam_role.iam_dev_role_cb_api.arn
@@ -183,24 +153,14 @@ resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
 }
 
 
-# --- Lake Formation: Grant DESCRIBE + SELECT on table
-# resource "aws_lakeformation_permissions" "lambda_table_access" {
-#   principal   = aws_iam_role.iam_dev_role_cb_api.arn
-#   permissions = ["DESCRIBE", "SELECT"]
-
-#   table {
-#     database_name = var.database
-#     name          = var.table
-#   }
-# }
 
 
-# ✅ Usa wildcard por database (aplica a todas las tablas presentes y futuras)
+# Usa wildcard por database (aplica a todas las tablas presentes y futuras)
 resource "aws_lakeformation_permissions" "lambda_db_select" {
   principal   = aws_iam_role.iam_dev_role_cb_api.arn
   permissions = ["DESCRIBE", "SELECT"]
 
-  # ✅ Compatible con todas las versiones de Terraform AWS provider
+  #Compatible con todas las versiones de Terraform AWS provider
   table {
     database_name = var.database
     name          = "*"
