@@ -62,12 +62,46 @@ resource "aws_glue_classifier" "json_classifier" {
   }
 }
 
-# 🔹 Crawler con referencia al clasificador
+# # 🔹 Crawler con referencia al clasificador
+# resource "aws_glue_crawler" "coinbase_s3_crawler" {
+#   name          = "coinbase_s3_crawler"
+#   role          = aws_iam_role.glue_role.arn
+#   database_name = aws_glue_catalog_database.coinbase_db.name
+#   description   = "Crawler que detecta archivos JSON GZIP particionados en base/year/month/day/hour"
+
+#   s3_target {
+#     path = "s3://${var.bucket_name}/coinbase/ingest/"
+#   }
+
+#   classifiers = [aws_glue_classifier.json_classifier.name]
+
+#   recrawl_policy {
+#     recrawl_behavior = "CRAWL_EVERYTHING"
+#   }
+
+#   schema_change_policy {
+#     update_behavior = "UPDATE_IN_DATABASE"
+#     delete_behavior = "LOG"
+#   }
+
+#   configuration = jsonencode({
+#     Version = 1.0
+#     Grouping = {
+#       TableGroupingPolicy = "CombineCompatibleSchemas"
+#     }
+#   })
+
+#   schedule = "cron(0/6 * * * ? *)"
+# }
+
+
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
   database_name = aws_glue_catalog_database.coinbase_db.name
   description   = "Crawler que detecta archivos JSON GZIP particionados en base/year/month/day/hour"
+
+  table_prefix  = "coinbase_"
 
   s3_target {
     path = "s3://${var.bucket_name}/coinbase/ingest/"
@@ -86,9 +120,7 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
 
   configuration = jsonencode({
     Version = 1.0
-    Grouping = {
-      TableGroupingPolicy = "CombineCompatibleSchemas"
-    }
+    Grouping = { TableGroupingPolicy = "CombineCompatibleSchemas" }
   })
 
   schedule = "cron(0/6 * * * ? *)"

@@ -72,49 +72,26 @@ resource "aws_iam_role_policy" "firehose_policy_attach" {
 
 resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
   name        = var.firehose_name
-  destination = "extended_s3"
+  destination = "s3"
+
+  role_arn = aws_iam_role.firehose_role.arn
+
+  s3_configuration {
+    bucket_arn         = var.bucket_arn
+    compression_format = "GZIP"
+    kms_key_arn        = var.kms_key_arn
+
+    # IMPORTANTES: que coincidan con el Crawler
+    prefix              = "coinbase/ingest/partition_date=!{timestamp:yyyy-MM-dd}/"
+    error_output_prefix = "coinbase/errors/!{firehose:error-output-type}/"
+
+    buffering_interval = 60
+    buffering_size     = 5
+  }
 
   kinesis_source_configuration {
     kinesis_stream_arn = aws_kinesis_stream.coinbase_stream.arn
     role_arn           = aws_iam_role.firehose_role.arn
   }
 
-  extended_s3_configuration {
-    role_arn           = aws_iam_role.firehose_role.arn
-    bucket_arn         = var.bucket_arn
-    compression_format = "GZIP"
-
-   
-    prefix = "coinbase/ingest/partition_date=!{partitionKeyFromQuery:partition_date}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
-    error_output_prefix = "coinbase/errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
-
-    buffering_interval = 60
-    buffering_size     = 64
-
-    cloudwatch_logging_options {
-      enabled         = true
-      log_group_name  = "/aws/kinesisfirehose/${var.firehose_name}"
-      log_stream_name = "S3Delivery"
-    }
-
-    
-    dynamic_partitioning_configuration {
-      enabled = true
-    }
-
-    processing_configuration {
-      enabled = true
-      processors {
-        type = "MetadataExtraction"
-        parameters {
-          parameter_name  = "MetadataExtractionQuery"
-          parameter_value = "{partition_date: (.date | split(\" \")[0])}"
-        }
-        parameters {
-          parameter_name  = "JsonParsingEngine"
-          parameter_value = "JQ-1.6"
-        }
-      }
-    }
-  }
 }
