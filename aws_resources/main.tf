@@ -22,8 +22,7 @@ module "lambda_utils" {
   database    = module.glue_catalog_utils.database
   crawler_role = module.glue_catalog_utils.crawler_role
   data_location = module.glue_catalog_utils.data_location
-  
-  # ⚠️ Do NOT reference eventbridge or glue here
+
 }
 
 # --- 4. EventBridge Scheduler ---
@@ -36,5 +35,6 @@ module "eventbridge_utils" {
 module "glue_catalog_utils" {
   source      = "./glue_catalog_module"
   bucket_name = module.bucket_utils.bucket_name
-  # ⚠️ Use dedicated glue role inside the module
+  lambda_role = module.lambda_utils.lambda_role
+
 }
