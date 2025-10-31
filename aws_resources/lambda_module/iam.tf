@@ -110,6 +110,6 @@ resource "aws_lakeformation_permissions" "lambda_db_permissions" {
   permissions = ["CREATE_TABLE", "ALTER", "DESCRIBE"]
 
   database {
-    name = aws_glue_catalog_database.coinbase_db.name
+    name = var.database
   }
 }
