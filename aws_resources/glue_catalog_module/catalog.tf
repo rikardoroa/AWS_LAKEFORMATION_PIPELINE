@@ -91,7 +91,23 @@ resource "aws_iam_role_policy" "glue_role_policy" {
         "arn:aws:s3:::${var.bucket_name}",
         "arn:aws:s3:::${var.bucket_name}/*"
       ]
-    }]
+    },
+      {
+        Sid: "CloudWatchLogs",
+        Effect: "Allow",
+        Action: [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams"
+        ],
+        Resource: [
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws-glue/*",
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws-glue/*:log-stream:*"
+        ]
+      }
+    ]
   })
 }
 
