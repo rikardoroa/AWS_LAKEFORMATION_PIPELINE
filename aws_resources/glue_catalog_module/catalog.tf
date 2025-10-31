@@ -530,9 +530,8 @@ data "aws_region" "current" {}
 resource "aws_lakeformation_data_lake_settings" "default" {
   admins = [aws_iam_role.glue_role.arn]
   
-  # Evitar conflictos con permisos heredados - sintaxis correcta
-  create_database_default_permissions = []
-  create_table_default_permissions    = []
+  # Omitir create_database_default_permissions y create_table_default_permissions
+  # para usar control explícito de Lake Formation
 }
 
 resource "aws_glue_catalog_database" "coinbase_db" {
