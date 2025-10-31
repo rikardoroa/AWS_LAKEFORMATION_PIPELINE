@@ -1,3 +1,100 @@
+# data "aws_caller_identity" "current" {}
+# data "aws_region" "current" {}
+
+# resource "aws_glue_catalog_database" "coinbase_db" {
+#   name = "coinbase_api_s3_data"
+# }
+
+# # Rol de Glue (Crawler)
+# resource "aws_iam_role" "glue_role" {
+#   name = "iam_glue_crawler_role"
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [{
+#       Effect = "Allow",
+#       Principal = { Service = "glue.amazonaws.com" },
+#       Action = "sts:AssumeRole"
+#     }]
+#   })
+# }
+
+# # Adjunta la política administrada estándar de Glue
+# resource "aws_iam_role_policy_attachment" "glue_service_role_attach" {
+#   role       = aws_iam_role.glue_role.name
+#   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+# }
+
+# # Permisos extra (CloudWatch Logs, S3 data, Glue Catalog) si no los tienes ya en inline policy
+# # ...
+
+# # 🔐 Lake Formation: registra la data location y otorga permisos al rol del crawler
+# resource "aws_lakeformation_resource" "data_location" {
+#   arn = "arn:aws:s3:::${var.bucket_name}"
+#   role_arn = aws_iam_role.glue_role.arn
+# }
+
+# # **Permiso de Data Location** a la ruta (LF controla acceso al S3 en el Data Lake)
+# resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
+#   principal   = aws_iam_role.glue_role.arn
+#   permissions = ["DATA_LOCATION_ACCESS"]
+
+#   data_location {
+#     arn = aws_lakeformation_resource.data_location.arn
+#   }
+# }
+
+
+# # **Permisos sobre la Database** para que el crawler cree/actualice tablas
+# resource "aws_lakeformation_permissions" "crawler_database_perm" {
+#   principal  = aws_iam_role.glue_role.arn
+#   permissions = ["CREATE_TABLE","ALTER","DROP","DESCRIBE"]
+
+#   database {
+#     name = aws_glue_catalog_database.coinbase_db.name
+#   }
+# }
+
+# # 🔹 Clasificador JSON para Glue
+# resource "aws_glue_classifier" "json_classifier" {
+#   name            = "coinbase_json_classifier"
+#   json_classifier {
+#     json_path = "$"
+#   }
+# }
+
+
+# resource "aws_glue_crawler" "coinbase_s3_crawler" {
+#   name          = "coinbase_s3_crawler"
+#   role          = aws_iam_role.glue_role.arn
+#   database_name = aws_glue_catalog_database.coinbase_db.name
+#   description   = "Crawler que detecta archivos JSON GZIP particionados en base/year/month/day/hour"
+
+#   table_prefix  = "coinbase_"
+
+#   s3_target {
+#     path = "s3://${var.bucket_name}/coinbase/ingest/"
+#   }
+
+#   classifiers = [aws_glue_classifier.json_classifier.name]
+
+#   recrawl_policy {
+#     recrawl_behavior = "CRAWL_EVERYTHING"
+#   }
+
+#   schema_change_policy {
+#     update_behavior = "UPDATE_IN_DATABASE"
+#     delete_behavior = "LOG"
+#   }
+
+#   configuration = jsonencode({
+#     Version = 1.0
+#     Grouping = { TableGroupingPolicy = "CombineCompatibleSchemas" }
+#   })
+
+#   schedule = "cron(0/6 * * * ? *)"
+# }
+
+
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
@@ -5,35 +102,31 @@ resource "aws_glue_catalog_database" "coinbase_db" {
   name = "coinbase_api_s3_data"
 }
 
-# Rol de Glue (Crawler)
 resource "aws_iam_role" "glue_role" {
   name = "iam_glue_crawler_role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
       Effect = "Allow",
       Principal = { Service = "glue.amazonaws.com" },
-      Action = "sts:AssumeRole"
+      Action    = "sts:AssumeRole"
     }]
   })
 }
 
-# Adjunta la política administrada estándar de Glue
 resource "aws_iam_role_policy_attachment" "glue_service_role_attach" {
   role       = aws_iam_role.glue_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
 
-# Permisos extra (CloudWatch Logs, S3 data, Glue Catalog) si no los tienes ya en inline policy
-# ...
-
-# 🔐 Lake Formation: registra la data location y otorga permisos al rol del crawler
+# 🔐 Lake Formation Data Location registration
 resource "aws_lakeformation_resource" "data_location" {
-  arn = "arn:aws:s3:::${var.bucket_name}"
+  arn      = "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/"
   role_arn = aws_iam_role.glue_role.arn
 }
 
-# **Permiso de Data Location** a la ruta (LF controla acceso al S3 en el Data Lake)
+# 🔐 DATA_LOCATION_ACCESS permission
 resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
   principal   = aws_iam_role.glue_role.arn
   permissions = ["DATA_LOCATION_ACCESS"]
@@ -43,10 +136,9 @@ resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
   }
 }
 
-
-# **Permisos sobre la Database** para que el crawler cree/actualice tablas
+# 🔐 Database-level permissions
 resource "aws_lakeformation_permissions" "crawler_database_perm" {
-  principal  = aws_iam_role.glue_role.arn
+  principal   = aws_iam_role.glue_role.arn
   permissions = ["CREATE_TABLE","ALTER","DROP","DESCRIBE"]
 
   database {
@@ -54,22 +146,33 @@ resource "aws_lakeformation_permissions" "crawler_database_perm" {
   }
 }
 
-# 🔹 Clasificador JSON para Glue
+# 🔐 Catalog permission (NEW)
+resource "aws_lakeformation_permissions" "crawler_catalog_perm" {
+  principal   = aws_iam_role.glue_role.arn
+  permissions = ["DESCRIBE"]
+
+  catalog {
+    catalog_id = data.aws_caller_identity.current.account_id
+  }
+}
+
+# 🔹 JSON classifier
 resource "aws_glue_classifier" "json_classifier" {
-  name            = "coinbase_json_classifier"
+  name = "coinbase_json_classifier"
+
   json_classifier {
     json_path = "$"
   }
 }
 
-
+# 🔹 Glue crawler
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
   database_name = aws_glue_catalog_database.coinbase_db.name
   description   = "Crawler que detecta archivos JSON GZIP particionados en base/year/month/day/hour"
 
-  table_prefix  = "coinbase_"
+  table_prefix = "coinbase_"
 
   s3_target {
     path = "s3://${var.bucket_name}/coinbase/ingest/"
@@ -87,7 +190,7 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   }
 
   configuration = jsonencode({
-    Version = 1.0
+    Version  = 1.0
     Grouping = { TableGroupingPolicy = "CombineCompatibleSchemas" }
   })
 
