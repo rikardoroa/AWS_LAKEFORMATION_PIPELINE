@@ -1,4 +1,4 @@
-# kinesis stream
+# Kinesis stream
 resource "aws_kinesis_stream" "coinbase_stream" {
   name             = "coinbase-price-stream"
   shard_count      = 1                        
@@ -20,22 +20,39 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
     bucket_arn         = var.bucket_arn
     kms_key_arn        = var.kms_key_arn
     
-    # Prefijos con particionamiento por fecha/hora
-    prefix              = "coinbase/ingest/!{timestamp:yyyy/MM/dd/HH}/"
-    error_output_prefix = "coinbase/errors/!{firehose:error-output-type}/!{timestamp:yyyy/MM/dd/HH}/"
+    # Prefix with dynamic partitioning - uses special placeholders
+    # !{partitionKeyFromQuery:xxx} or !{timestamp:xxx}
+    prefix = "coinbase/ingest/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/"
+    error_output_prefix = "coinbase/errors/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/!{firehose:error-output-type}/"
     
     buffering_size     = 1   
     buffering_interval = 60
     
     compression_format = "GZIP"
     
+    # Enable dynamic partitioning
     dynamic_partitioning_configuration {
       enabled = true
     }
     
-    # Procesamiento simple para agregar delimitadores
+    # Processing configuration to extract fields from JSON
     processing_configuration {
       enabled = true
+
+      processors {
+        type = "MetadataExtraction"
+        
+        parameters {
+          parameter_name  = "JsonParsingEngine"
+          parameter_value = "JQ-1.6"
+        }
+        
+        parameters {
+          parameter_name  = "MetadataExtractionQuery"
+          # Extracts the 'base' field from JSON for partitioning
+          parameter_value = "{base:.base}"
+        }
+      }
       
       processors {
         type = "AppendDelimiterToRecord"
