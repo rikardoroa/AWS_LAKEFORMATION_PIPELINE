@@ -146,6 +146,30 @@ resource "aws_iam_role_policy" "firehose_policy_attach" {
 
 # }
 
+# resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
+#   name        = var.firehose_name
+#   destination = "extended_s3"
+
+#   extended_s3_configuration {
+#     role_arn           = aws_iam_role.firehose_role.arn
+#     bucket_arn         = var.bucket_arn
+#     compression_format = "GZIP"
+#     kms_key_arn        = var.kms_key_arn
+
+#     # 🔸 Coincide con la estructura esperada por el Crawler
+#     prefix = "coinbase/ingest/partition_date=!{timestamp:yyyy-MM-dd}/"
+#     error_output_prefix = "coinbase/errors/!{firehose:error-output-type}/"
+
+#     buffering_interval = 60  # segundos
+#     buffering_size     = 5   # MB
+#   }
+
+#   kinesis_source_configuration {
+#     kinesis_stream_arn = aws_kinesis_stream.coinbase_stream.arn
+#     role_arn           = aws_iam_role.firehose_role.arn
+#   }
+# }
+
 resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
   name        = var.firehose_name
   destination = "extended_s3"
@@ -153,15 +177,19 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
   extended_s3_configuration {
     role_arn           = aws_iam_role.firehose_role.arn
     bucket_arn         = var.bucket_arn
-    compression_format = "GZIP"
+    compression_format = "UNCOMPRESSED"
     kms_key_arn        = var.kms_key_arn
 
-    # 🔸 Coincide con la estructura esperada por el Crawler
-    prefix = "coinbase/ingest/partition_date=!{timestamp:yyyy-MM-dd}/"
+    # 📦 Estructura clara para el crawler
+    # Cada archivo será un JSONL (.json)
+    prefix              = "coinbase/ingest/partition_date=!{timestamp:yyyy-MM-dd}/"
     error_output_prefix = "coinbase/errors/!{firehose:error-output-type}/"
 
-    buffering_interval = 60  # segundos
-    buffering_size     = 5   # MB
+    buffering_interval  = 60   # segundos
+    buffering_size      = 5    # MB
+
+    # 🔸 Extensión opcional personalizada (requiere Terraform >= 1.9 y AWS provider >= 5.50)
+    file_extension = ".json"
   }
 
   kinesis_source_configuration {
