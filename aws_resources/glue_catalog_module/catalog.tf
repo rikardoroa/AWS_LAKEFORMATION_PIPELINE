@@ -98,14 +98,13 @@ resource "aws_lakeformation_data_lake_settings" "default" {
     aws_iam_role_policy.glue_lakeformation_policy
   ]
 }
+
 ##########################################
 # ⏳ 5️⃣ Espera de propagación
 ##########################################
 resource "time_sleep" "wait_for_lakeformation_settings" {
   create_duration = "30s"
-  depends_on = [
-    aws_lakeformation_data_lake_settings.default
-  ]
+  depends_on = [aws_lakeformation_data_lake_settings.default]
 }
 
 ##########################################
@@ -114,7 +113,7 @@ resource "time_sleep" "wait_for_lakeformation_settings" {
 resource "aws_glue_catalog_database" "coinbase_db" {
   name        = "coinbase_api_s3_data"
   description = "Glue Catalog DB for Coinbase API data"
-  parameters = { classification = "json" }
+  parameters  = { classification = "json" }
 
   depends_on = [time_sleep.wait_for_lakeformation_settings]
 }
@@ -150,6 +149,7 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   classifiers = [aws_glue_classifier.json_classifier.name]
 
   recrawl_policy { recrawl_behavior = "CRAWL_EVERYTHING" }
+
   schema_change_policy {
     update_behavior = "UPDATE_IN_DATABASE"
     delete_behavior = "LOG"
@@ -199,9 +199,13 @@ resource "aws_iam_role_policy_attachment" "glue_logs_attach" {
 # 🧩 1️⃣1️⃣ Permisos Lake Formation – CRAWLER
 ##########################################
 resource "aws_lakeformation_permissions" "crawler_data_location_access" {
+  catalog_id  = data.aws_caller_identity.current.account_id
   principal   = aws_iam_role.glue_role.arn
   permissions = ["DATA_LOCATION_ACCESS"]
-  data_location { arn = aws_lakeformation_resource.data_location.arn }
+
+  data_location {
+    arn = aws_lakeformation_resource.data_location.arn
+  }
 
   depends_on = [
     aws_lakeformation_resource.data_location,
@@ -210,8 +214,10 @@ resource "aws_lakeformation_permissions" "crawler_data_location_access" {
 }
 
 resource "aws_lakeformation_permissions" "crawler_database_perms" {
+  catalog_id  = data.aws_caller_identity.current.account_id
   principal   = aws_iam_role.glue_role.arn
   permissions = ["CREATE_TABLE", "ALTER", "DROP", "DESCRIBE"]
+
   database { name = aws_glue_catalog_database.coinbase_db.name }
 
   depends_on = [
@@ -221,8 +227,10 @@ resource "aws_lakeformation_permissions" "crawler_database_perms" {
 }
 
 resource "aws_lakeformation_permissions" "crawler_tables_perms" {
+  catalog_id  = data.aws_caller_identity.current.account_id
   principal   = aws_iam_role.glue_role.arn
   permissions = ["ALTER", "DROP", "DESCRIBE"]
+
   table {
     database_name = aws_glue_catalog_database.coinbase_db.name
     wildcard      = true
@@ -235,12 +243,16 @@ resource "aws_lakeformation_permissions" "crawler_tables_perms" {
 }
 
 ##########################################
-# 🧩 1️⃣2️⃣ Permisos Lake Formation – LAMBDA
+# 🧩 1️⃣2️⃣ Permisos Lake Formation – LAMBDA (FINAL)
 ##########################################
 resource "aws_lakeformation_permissions" "lambda_data_location_access" {
+  catalog_id  = data.aws_caller_identity.current.account_id
   principal   = var.lambda_role
   permissions = ["DATA_LOCATION_ACCESS"]
-  data_location { arn = aws_lakeformation_resource.data_location.arn }
+
+  data_location {
+    arn = aws_lakeformation_resource.data_location.arn
+  }
 
   depends_on = [
     aws_lakeformation_resource.data_location,
@@ -248,20 +260,11 @@ resource "aws_lakeformation_permissions" "lambda_data_location_access" {
   ]
 }
 
-resource "aws_lakeformation_permissions" "lambda_database_describe" {
-  principal   = var.lambda_role
-  permissions = ["DESCRIBE"]
-  database { name = aws_glue_catalog_database.coinbase_db.name }
-
-  depends_on = [
-    aws_glue_catalog_database.coinbase_db,
-    aws_lakeformation_data_lake_settings.default
-  ]
-}
-
-resource "aws_lakeformation_permissions" "lambda_tables_describe" {
+resource "aws_lakeformation_permissions" "lambda_table_access" {
+  catalog_id  = data.aws_caller_identity.current.account_id
   principal   = var.lambda_role
   permissions = ["DESCRIBE", "SELECT"]
+
   table {
     database_name = aws_glue_catalog_database.coinbase_db.name
     wildcard      = true
@@ -269,7 +272,7 @@ resource "aws_lakeformation_permissions" "lambda_tables_describe" {
 
   depends_on = [
     aws_glue_catalog_database.coinbase_db,
-    aws_lakeformation_data_lake_settings.default
+    aws_lakeformation_permissions.lambda_data_location_access
   ]
 }
 
