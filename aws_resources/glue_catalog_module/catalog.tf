@@ -79,14 +79,13 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
   database_name = aws_glue_catalog_database.coinbase_db.name
+  description   = "Crawler que detecta archivos JSON GZIP particionados en base/year/month/day/hour"
 
-  # 🔍 Define clasificación explícita y recorre todas las particiones base/year/month/day/hour
   s3_target {
-    path           = "s3://${var.bucket_name}/coinbase/ingest/"
-    classification = "json"
-    sample_size    = 10
+    path = "s3://${var.bucket_name}/coinbase/ingest/"
   }
 
+  # Reconfigurar política de recrawling
   recrawl_policy {
     recrawl_behavior = "CRAWL_EVERYTHING"
   }
@@ -96,5 +95,17 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     delete_behavior = "LOG"
   }
 
+  # 🔄 Ejecutar cada 6 minutos
   schedule = "cron(0/6 * * * ? *)"
+
+  # 🔍 Clasificación manual (válida para Glue Crawler)
+  configuration = jsonencode({
+    Version = 1.0
+    CrawlerOutput = {
+      Partitions = { AddOrUpdateBehavior = "InheritFromTable" }
+    }
+    Grouping = { TableGroupingPolicy = "CombineCompatibleSchemas" }
+    # 👇 Esta línea fuerza a Glue a interpretar como JSON
+    CustomClassifier = "json"
+  })
 }
