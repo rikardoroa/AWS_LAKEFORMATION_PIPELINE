@@ -65,6 +65,9 @@ module "lambda_utils" {
   bucket_arn  = module.bucket_utils.bucket_arn
   kms_key_arn = module.bucket_utils.kms_key_arn
   stream_name = module.kinesis_utils.stream_name
+  api_key     = var.api_key
+  secret_key  = var.secret_key
+  database    = module.glue_catalog_utils.database
   # ⚠️ Do NOT reference eventbridge or glue here
 }
 
