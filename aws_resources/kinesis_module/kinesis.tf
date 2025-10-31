@@ -85,7 +85,7 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
     compression_format = "GZIP"
 
    
-    prefix = "coinbase/ingest/partition_date=!{partitionKeyFromQuery:date}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
+    prefix = "coinbase/ingest/partition_date=!{partitionKeyFromQuery:partition_date}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
     error_output_prefix = "coinbase/errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
 
     buffering_interval = 60
