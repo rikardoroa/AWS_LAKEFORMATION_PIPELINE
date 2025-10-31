@@ -113,3 +113,20 @@ resource "aws_lakeformation_permissions" "lambda_db_permissions" {
     name = var.database
   }
 }
+
+
+#Register the S3 path in Lake Formation
+resource "aws_lakeformation_resource" "coinbase_data_location" {
+  arn      = "arn:aws:s3:::${var.bucket_name}"
+  role_arn = aws_iam_role.iam_dev_role_cb_api.arn
+}
+
+#Grant Lake Formation permission for the Lambda role to access that S3 data location
+resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
+  principal   = aws_iam_role.iam_dev_role_cb_api.arn
+  permissions = ["DATA_LOCATION_ACCESS"]
+
+  data_location {
+    arn = aws_lakeformation_resource.coinbase_data_location.arn
+  }
+}
