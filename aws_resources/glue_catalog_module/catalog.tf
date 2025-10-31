@@ -218,7 +218,8 @@ resource "aws_iam_role_policy" "glue_s3_policy" {
         Action = [
           "s3:GetObject",
           "s3:PutObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:DeleteObject"
         ],
         Resource = [
           "arn:aws:s3:::${var.bucket_name}",
@@ -229,7 +230,7 @@ resource "aws_iam_role_policy" "glue_s3_policy" {
   })
 }
 
-# 3️⃣ Política de Lake Formation para Glue
+# 3️⃣ Política EXTENDIDA de Lake Formation para Glue
 resource "aws_iam_role_policy" "glue_lakeformation_policy" {
   name = "glue_lakeformation_access"
   role = aws_iam_role.glue_role.id
@@ -242,7 +243,13 @@ resource "aws_iam_role_policy" "glue_lakeformation_policy" {
         Action = [
           "lakeformation:GetDataAccess",
           "lakeformation:GrantPermissions",
-          "lakeformation:ListPermissions"
+          "lakeformation:ListPermissions",
+          "lakeformation:GetResourceLFTags",
+          "lakeformation:ListResources",
+          "lakeformation:GetLFTag",
+          "lakeformation:GetEffectivePermissionsForPath",
+          "lakeformation:PutDataLakeSettings",
+          "lakeformation:GetDataLakeSettings"
         ],
         Resource = "*"
       }
@@ -250,9 +257,12 @@ resource "aws_iam_role_policy" "glue_lakeformation_policy" {
   })
 }
 
-# 4️⃣ Configurar Data Lake Settings
+# 4️⃣ Configurar Data Lake Settings con IAM-only permissions
 resource "aws_lakeformation_data_lake_settings" "default" {
   admins = [aws_iam_role.glue_role.arn]
+  
+  # 🔧 SOLUCIÓN CRÍTICA: Usar solo permisos IAM para evitar errores
+  use_only_iam_permissions = true
   
   depends_on = [
     aws_iam_role.glue_role,
@@ -260,9 +270,9 @@ resource "aws_lakeformation_data_lake_settings" "default" {
   ]
 }
 
-# 5️⃣ Recurso de espera para propagación de permisos
+# 5️⃣ Recurso de espera EXTENDIDO para propagación de permisos
 resource "time_sleep" "wait_for_lakeformation_settings" {
-  create_duration = "30s"
+  create_duration = "60s"  # Aumentado a 60 segundos
 
   depends_on = [
     aws_lakeformation_data_lake_settings.default
@@ -278,9 +288,9 @@ resource "aws_glue_catalog_database" "coinbase_db" {
   ]
 }
 
-# 7️⃣ Registrar Data Location
+# 7️⃣ Registrar Data Location CORREGIDO (bucket raíz)
 resource "aws_lakeformation_resource" "data_location" {
-  arn      = "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/"
+  arn      = "arn:aws:s3:::${var.bucket_name}"  # 🔧 SOLUCIÓN: Bucket raíz, no subcarpeta
   role_arn = aws_iam_role.glue_role.arn
   
   depends_on = [
@@ -289,36 +299,7 @@ resource "aws_lakeformation_resource" "data_location" {
   ]
 }
 
-# 8️⃣ Permisos de Lake Formation
-resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
-  principal   = aws_iam_role.glue_role.arn
-  permissions = ["DATA_LOCATION_ACCESS"]
-
-  data_location {
-    arn = aws_lakeformation_resource.data_location.arn
-  }
-
-  depends_on = [
-    time_sleep.wait_for_lakeformation_settings,
-    aws_lakeformation_resource.data_location
-  ]
-}
-
-resource "aws_lakeformation_permissions" "crawler_database_perm" {
-  principal   = aws_iam_role.glue_role.arn
-  permissions = ["CREATE_TABLE", "ALTER", "DROP", "DESCRIBE"]
-
-  database {
-    name = aws_glue_catalog_database.coinbase_db.name
-  }
-
-  depends_on = [
-    time_sleep.wait_for_lakeformation_settings,
-    aws_glue_catalog_database.coinbase_db
-  ]
-}
-
-# 9️⃣ JSON classifier
+# 8️⃣ JSON classifier
 resource "aws_glue_classifier" "json_classifier" {
   name = "coinbase_json_classifier"
 
@@ -327,7 +308,7 @@ resource "aws_glue_classifier" "json_classifier" {
   }
 }
 
-# 🔟 Glue crawler
+# 9️⃣ Glue crawler
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
@@ -359,12 +340,13 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   schedule = "cron(0/6 * * * ? *)"
   
   depends_on = [
-    aws_lakeformation_permissions.crawler_database_perm,
-    aws_lakeformation_permissions.crawler_data_location_perm
+    aws_lakeformation_resource.data_location,
+    aws_iam_role_policy.glue_s3_policy,
+    aws_glue_catalog_database.coinbase_db
   ]
 }
 
-# 1️⃣1️⃣ Logs policy
+# 🔟 Logs policy
 data "aws_iam_policy_document" "glue_logs_extra" {
   statement {
     effect = "Allow"
@@ -386,4 +368,9 @@ resource "aws_iam_policy" "glue_logs_extra" {
 resource "aws_iam_role_policy_attachment" "glue_logs_attach" {
   role       = aws_iam_role.glue_role.name
   policy_arn = aws_iam_policy.glue_logs_extra.arn
+}
+
+# 1️⃣1️⃣ Verificación del bucket S3 (nuevo recurso agregado)
+data "aws_s3_bucket" "main" {
+  bucket = var.bucket_name
 }
