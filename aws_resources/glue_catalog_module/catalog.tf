@@ -1,7 +1,12 @@
+##########################################
+# 📌 Data e Identidad
+##########################################
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
-# 1️⃣ Crear el rol de Glue
+##########################################
+# 🧩 1️⃣ Crear el rol de Glue
+##########################################
 resource "aws_iam_role" "glue_role" {
   name = "iam_glue_crawler_role"
 
@@ -20,7 +25,9 @@ resource "aws_iam_role_policy_attachment" "glue_service_role_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
 
-# 2️⃣ Política S3 para Glue
+##########################################
+# 🪣 2️⃣ Política S3 para Glue
+##########################################
 resource "aws_iam_role_policy" "glue_s3_policy" {
   name = "glue_s3_access"
   role = aws_iam_role.glue_role.id
@@ -45,7 +52,9 @@ resource "aws_iam_role_policy" "glue_s3_policy" {
   })
 }
 
-# 3️⃣ Política COMPLETA de Lake Formation para Glue
+##########################################
+# 🔐 3️⃣ Política de Lake Formation para Glue
+##########################################
 resource "aws_iam_role_policy" "glue_lakeformation_policy" {
   name = "glue_lakeformation_access"
   role = aws_iam_role.glue_role.id
@@ -64,31 +73,34 @@ resource "aws_iam_role_policy" "glue_lakeformation_policy" {
   })
 }
 
-# 4️⃣ Data Lake Settings - AMBOS ROLES COMO ADMIN
+##########################################
+# 🧑‍💼 4️⃣ Data Lake Settings - Glue + Lambda admins
+##########################################
 resource "aws_lakeformation_data_lake_settings" "default" {
   admins = [
     aws_iam_role.glue_role.arn,
-    var.lambda_role 
+    var.lambda_role
   ]
-  
-  # IMPORTANTE: Permitir acceso sin Lake Formation
+
   create_database_default_permissions {
     permissions = ["ALL"]
     principal   = "IAM_ALLOWED_PRINCIPALS"
   }
-  
+
   create_table_default_permissions {
     permissions = ["ALL"]
     principal   = "IAM_ALLOWED_PRINCIPALS"
   }
-  
+
   depends_on = [
     aws_iam_role.glue_role,
     aws_iam_role_policy.glue_lakeformation_policy
   ]
 }
 
-# 5️⃣ Recurso de espera para propagación
+##########################################
+# ⏳ 5️⃣ Espera de propagación
+##########################################
 resource "time_sleep" "wait_for_lakeformation_settings" {
   create_duration = "30s"
 
@@ -97,26 +109,36 @@ resource "time_sleep" "wait_for_lakeformation_settings" {
   ]
 }
 
-# 6️⃣ Crear la base de datos
+##########################################
+# 🗂️ 6️⃣ Crear base de datos Glue Catalog
+##########################################
 resource "aws_glue_catalog_database" "coinbase_db" {
-  name = "coinbase_api_s3_data"
-  
+  name        = "coinbase_api_s3_data"
+  description = "Glue Catalog DB for Coinbase API data"
+  parameters = {
+    classification = "json"
+  }
+
   depends_on = [
     time_sleep.wait_for_lakeformation_settings
   ]
 }
 
-# 7️⃣ Registrar Data Location
+##########################################
+# 📦 7️⃣ Registrar Data Location en Lake Formation
+##########################################
 resource "aws_lakeformation_resource" "data_location" {
   arn      = "arn:aws:s3:::${var.bucket_name}"
   role_arn = aws_iam_role.glue_role.arn
-  
+
   depends_on = [
     time_sleep.wait_for_lakeformation_settings
   ]
 }
 
-# 8️⃣ JSON classifier
+##########################################
+# 🧱 8️⃣ JSON Classifier para archivos de entrada
+##########################################
 resource "aws_glue_classifier" "json_classifier" {
   name = "coinbase_json_classifier"
 
@@ -125,14 +147,15 @@ resource "aws_glue_classifier" "json_classifier" {
   }
 }
 
-# 9️⃣ Glue crawler
+##########################################
+# 🧩 9️⃣ Glue Crawler - Detecta y actualiza tablas
+##########################################
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
   database_name = aws_glue_catalog_database.coinbase_db.name
   description   = "Crawler que detecta archivos JSON GZIP particionados"
-
-  table_prefix = ""  # Sin prefijo
+  table_prefix  = ""
 
   s3_target {
     path = "s3://${var.bucket_name}/coinbase/ingest/"
@@ -151,13 +174,13 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
 
   configuration = jsonencode({
     Version  = 1.0
-    Grouping = { 
+    Grouping = {
       TableGroupingPolicy = "CombineCompatibleSchemas"
     }
   })
 
   schedule = "cron(0/6 * * * ? *)"
-  
+
   depends_on = [
     aws_glue_catalog_database.coinbase_db,
     aws_iam_role_policy.glue_s3_policy,
@@ -165,7 +188,9 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   ]
 }
 
-# 🔟 Logs policy
+##########################################
+# 📜 🔟 Permisos adicionales de Logs
+##########################################
 data "aws_iam_policy_document" "glue_logs_extra" {
   statement {
     effect = "Allow"
@@ -189,7 +214,95 @@ resource "aws_iam_role_policy_attachment" "glue_logs_attach" {
   policy_arn = aws_iam_policy.glue_logs_extra.arn
 }
 
-# 1️⃣1️⃣ Verificación del bucket S3
+##########################################
+# 🧾 1️⃣1️⃣ Verificación del bucket
+##########################################
 data "aws_s3_bucket" "main" {
   bucket = var.bucket_name
+}
+
+##########################################
+# 🧩 1️⃣2️⃣ Permisos Lake Formation CRAWLER
+##########################################
+resource "aws_lakeformation_permissions" "crawler_data_location_access" {
+  principal   = aws_iam_role.glue_role.arn
+  permissions = ["DATA_LOCATION_ACCESS"]
+
+  data_location {
+    arn = aws_lakeformation_resource.data_location.arn
+  }
+
+  depends_on = [
+    aws_lakeformation_resource.data_location
+  ]
+}
+
+resource "aws_lakeformation_permissions" "crawler_database_perms" {
+  principal   = aws_iam_role.glue_role.arn
+  permissions = ["CREATE_TABLE", "ALTER", "DROP", "DESCRIBE"]
+
+  database {
+    name = aws_glue_catalog_database.coinbase_db.name
+  }
+
+  depends_on = [
+    aws_glue_catalog_database.coinbase_db
+  ]
+}
+
+resource "aws_lakeformation_permissions" "crawler_tables_perms" {
+  principal   = aws_iam_role.glue_role.arn
+  permissions = ["ALTER", "DROP", "DESCRIBE"]
+
+  table {
+    database_name = aws_glue_catalog_database.coinbase_db.name
+    wildcard      = true
+  }
+
+  depends_on = [
+    aws_glue_catalog_database.coinbase_db
+  ]
+}
+
+##########################################
+# 🧩 1️⃣3️⃣ Permisos Lake Formation LAMBDA ROLE
+##########################################
+resource "aws_lakeformation_permissions" "lambda_data_location_access" {
+  principal   = var.lambda_role
+  permissions = ["DATA_LOCATION_ACCESS"]
+
+  data_location {
+    arn = aws_lakeformation_resource.data_location.arn
+  }
+
+  depends_on = [
+    aws_lakeformation_resource.data_location
+  ]
+}
+
+resource "aws_lakeformation_permissions" "lambda_database_describe" {
+  principal   = var.lambda_role
+  permissions = ["DESCRIBE"]
+
+  database {
+    name = aws_glue_catalog_database.coinbase_db.name
+  }
+
+  depends_on = [
+    aws_glue_catalog_database.coinbase_db
+  ]
+}
+
+resource "aws_lakeformation_permissions" "lambda_tables_describe" {
+  principal   = var.lambda_role
+  permissions = ["DESCRIBE", "SELECT"]
+
+  table {
+    database_name = aws_glue_catalog_database.coinbase_db.name
+    wildcard      = true
+  }
+
+  depends_on = [
+    aws_glue_catalog_database.coinbase_db
+  ]
 }
