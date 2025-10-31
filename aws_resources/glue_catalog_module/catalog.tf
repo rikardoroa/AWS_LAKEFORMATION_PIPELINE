@@ -89,5 +89,19 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     delete_behavior = "LOG"
   }
 
+   # Configuration for partitions
+  configuration = jsonencode({
+    Version = 1.0
+    CrawlerOutput = {
+      Partitions = {
+        AddOrUpdateBehavior = "InheritFromTable"
+      }
+    }
+    Grouping = {
+      TableGroupingPolicy = "CombineCompatibleSchemas"
+    }
+  })
+
+
   schedule = "cron(0/6 * * * ? *)"
 }
