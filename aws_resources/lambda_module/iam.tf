@@ -105,10 +105,7 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       "lakeformation:GetDataAccess",
       "lakeformation:GetEffectivePermissionsForPath"
     ]
-    resources = [
-      "arn:aws:lakeformation:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
-      "arn:aws:lakeformation:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:resource/*"
-    ]
+    resources = ["*"]
   }
 }
 
