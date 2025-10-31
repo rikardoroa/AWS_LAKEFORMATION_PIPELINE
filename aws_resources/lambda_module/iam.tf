@@ -183,8 +183,10 @@ resource "aws_lakeformation_permissions" "lambda_db_select" {
   principal   = aws_iam_role.iam_dev_role_cb_api.arn
   permissions = ["DESCRIBE", "SELECT"]
 
-  table_with_wildcard {
+  # ✅ Compatible con todas las versiones de Terraform AWS provider
+  table {
     database_name = var.database
+    name          = "*"
   }
 
   depends_on = [
