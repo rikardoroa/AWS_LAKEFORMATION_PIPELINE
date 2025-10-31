@@ -122,7 +122,7 @@ resource "aws_lakeformation_permissions" "lambda_db_permissions" {
   permissions = ["CREATE_TABLE", "ALTER", "DESCRIBE"]
 
   database {
-    name = var.database_name
+    name = var.database
   }
 }
 
@@ -148,7 +148,7 @@ resource "aws_lakeformation_permissions" "lambda_table_access" {
   permissions = ["DESCRIBE", "SELECT"]
 
   table {
-    database_name = var.database_name
+    database_name = var.database
     name          = var.table
   }
 }
