@@ -50,22 +50,22 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
     ]
   }
 
-  # Allow access to Glue (for catalog creation, if your Lambda registers tables)
-  # statement {
-  #   sid    = "GlueCatalogAccess"
-  #   effect = "Allow"
-  #   actions = [
-  #     "glue:GetTable",
-  #     "glue:GetDatabase",
-  #     "glue:CreateTable",
-  #     "glue:UpdateTable"
-  #   ]
-  #   resources = [
-  #     "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
-  #     "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/*",
-  #     "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/*/*"
-  #   ]
-  # }
+  Allow access to Glue (for catalog creation, if your Lambda registers tables)
+  statement {
+    sid    = "GlueCatalogAccess"
+    effect = "Allow"
+    actions = [
+      "glue:GetTable",
+      "glue:GetDatabase",
+      "glue:CreateTable",
+      "glue:UpdateTable"
+    ]
+    resources = [
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/*",
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/*/*"
+    ]
+  }
 
 
   # Allow KMS encryption/decryption
