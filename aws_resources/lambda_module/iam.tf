@@ -78,59 +78,6 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       var.kms_key_arn
     ]
   }
-
-  # statement {
-  #   sid    = "AllowEventBridgeInvokeLambda"
-  #   effect = "Allow"
-  #   actions = [
-  #     "lambda:InvokeFunction"
-  #   ]
-  #   resources = ["aws_scheduler_schedule.coinbase_scheduler.arn"]
-  # }
-
-  # statement {
-  #   sid    = "S3AndKMSAccess"
-  #   effect = "Allow"
-  #   actions = [
-  #     "s3:ListBucket",
-  #     "s3:GetBucketLocation",
-  #     "s3:CreateBucket",
-  #     "s3:DeleteBucket",
-  #     "s3:PutObject",
-  #     "s3:GetObject",
-  #     "s3:DeleteObject",
-  #   ]
-  #   resources = ["*"]
-  # }
-
-  # statement {
-  #   sid    = "KMSKeyPermissions"
-  #   effect = "Allow"
-  #   actions = [
-  #     "kms:Encrypt",
-  #     "kms:Decrypt",
-  #     "kms:GenerateDataKey*",
-  #     "kms:DescribeKey"
-  #   ]
-  #   resources = ["*"]
-  # }
-
-
-
-# statement {
-#   sid    = "KinesisStreamAccess"
-#   effect = "Allow"
-#   actions = [
-#     "kinesis:DescribeStream",
-#     "kinesis:GetShardIterator",
-#     "kinesis:GetRecords",
-#     "kinesis:ListShards",
-#     "kinesis:PutRecord",
-#     "kinesis:PutRecords"
-#   ]
-#   resources = ["*"]
-# }
-
 }
 
 # Attach Inline Policy to Role
