@@ -79,7 +79,7 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   database_name = aws_glue_catalog_database.coinbase_db.name
 
   s3_target {
-    path = "s3://${var.bucket_name}/coinbase/raw/"
+    path = "s3://${var.bucket_name}/coinbase/ingest/"
   }
 
   recrawl_policy { recrawl_behavior = "CRAWL_EVERYTHING" }
