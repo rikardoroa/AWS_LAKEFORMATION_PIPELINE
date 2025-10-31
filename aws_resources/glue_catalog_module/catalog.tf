@@ -282,3 +282,21 @@ resource "aws_lakeformation_permissions" "lambda_table_access" {
 data "aws_s3_bucket" "main" {
   bucket = var.bucket_name
 }
+
+
+resource "aws_lakeformation_permissions" "lambda_specific_table_access" {
+  catalog_id  = data.aws_caller_identity.current.account_id
+  principal   = var.lambda_role
+  permissions = ["DESCRIBE", "SELECT"]
+
+  table {
+    database_name = aws_glue_catalog_database.coinbase_db.name
+    name           = "coinbase_currency_prices"
+  }
+
+  depends_on = [
+    aws_glue_catalog_database.coinbase_db,
+    aws_lakeformation_permissions.lambda_data_location_access,
+    aws_lakeformation_data_lake_settings.default
+  ]
+}
