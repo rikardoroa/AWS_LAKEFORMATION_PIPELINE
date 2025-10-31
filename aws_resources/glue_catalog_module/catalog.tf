@@ -186,7 +186,7 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
-# 1️⃣ PRIMERO: Crear el rol de Glue
+# 1️⃣ Crear el rol de Glue
 resource "aws_iam_role" "glue_role" {
   name = "iam_glue_crawler_role"
 
@@ -205,23 +205,7 @@ resource "aws_iam_role_policy_attachment" "glue_service_role_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
 
-# 2️⃣ SEGUNDO: Configurar Data Lake Settings con el rol como admin
-resource "aws_lakeformation_data_lake_settings" "default" {
-  admins = [aws_iam_role.glue_role.arn]
-  
-  depends_on = [aws_iam_role.glue_role]
-}
-
-# 3️⃣ TERCERO: Crear la base de datos
-resource "aws_glue_catalog_database" "coinbase_db" {
-  name = "coinbase_api_s3_data"
-  
-  depends_on = [
-    aws_lakeformation_data_lake_settings.default
-  ]
-}
-
-# 4️⃣ Política S3 para Glue
+# 2️⃣ Política S3 para Glue
 resource "aws_iam_role_policy" "glue_s3_policy" {
   name = "glue_s3_access"
   role = aws_iam_role.glue_role.id
@@ -245,18 +229,67 @@ resource "aws_iam_role_policy" "glue_s3_policy" {
   })
 }
 
-# 5️⃣ Registrar Data Location en Lake Formation
+# 3️⃣ Política de Lake Formation para Glue
+resource "aws_iam_role_policy" "glue_lakeformation_policy" {
+  name = "glue_lakeformation_access"
+  role = aws_iam_role.glue_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "lakeformation:GetDataAccess",
+          "lakeformation:GrantPermissions",
+          "lakeformation:ListPermissions"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# 4️⃣ Configurar Data Lake Settings
+resource "aws_lakeformation_data_lake_settings" "default" {
+  admins = [aws_iam_role.glue_role.arn]
+  
+  depends_on = [
+    aws_iam_role.glue_role,
+    aws_iam_role_policy.glue_lakeformation_policy
+  ]
+}
+
+# 5️⃣ Recurso de espera para propagación de permisos
+resource "time_sleep" "wait_for_lakeformation_settings" {
+  create_duration = "30s"
+
+  depends_on = [
+    aws_lakeformation_data_lake_settings.default
+  ]
+}
+
+# 6️⃣ Crear la base de datos
+resource "aws_glue_catalog_database" "coinbase_db" {
+  name = "coinbase_api_s3_data"
+  
+  depends_on = [
+    time_sleep.wait_for_lakeformation_settings
+  ]
+}
+
+# 7️⃣ Registrar Data Location
 resource "aws_lakeformation_resource" "data_location" {
   arn      = "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/"
   role_arn = aws_iam_role.glue_role.arn
   
   depends_on = [
-    aws_lakeformation_data_lake_settings.default,
+    time_sleep.wait_for_lakeformation_settings,
     aws_iam_role_policy.glue_s3_policy
   ]
 }
 
-# 6️⃣ Permisos de Lake Formation - SOLO después de que el rol sea admin
+# 8️⃣ Permisos de Lake Formation
 resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
   principal   = aws_iam_role.glue_role.arn
   permissions = ["DATA_LOCATION_ACCESS"]
@@ -266,7 +299,7 @@ resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
   }
 
   depends_on = [
-    aws_lakeformation_data_lake_settings.default,
+    time_sleep.wait_for_lakeformation_settings,
     aws_lakeformation_resource.data_location
   ]
 }
@@ -280,15 +313,12 @@ resource "aws_lakeformation_permissions" "crawler_database_perm" {
   }
 
   depends_on = [
-    aws_lakeformation_data_lake_settings.default,
+    time_sleep.wait_for_lakeformation_settings,
     aws_glue_catalog_database.coinbase_db
   ]
 }
 
-# ❌ ELIMINAR crawler_catalog_perm - No es necesario ya que el rol es admin
-# Los admins de Lake Formation ya tienen permisos completos sobre el catálogo
-
-# 7️⃣ JSON classifier
+# 9️⃣ JSON classifier
 resource "aws_glue_classifier" "json_classifier" {
   name = "coinbase_json_classifier"
 
@@ -297,7 +327,7 @@ resource "aws_glue_classifier" "json_classifier" {
   }
 }
 
-# 8️⃣ Glue crawler
+# 🔟 Glue crawler
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
@@ -334,7 +364,7 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   ]
 }
 
-# 9️⃣ Logs policy
+# 1️⃣1️⃣ Logs policy
 data "aws_iam_policy_document" "glue_logs_extra" {
   statement {
     effect = "Allow"
