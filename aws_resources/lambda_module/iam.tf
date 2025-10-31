@@ -15,7 +15,8 @@ resource "aws_iam_role" "iam_dev_role_cb_api" {
         Principal = {
           Service = [
             "lambda.amazonaws.com",
-            "firehose.amazonaws.com"
+            "firehose.amazonaws.com",
+            "scheduler.amazonaws.com"
           ]
         }
       }
