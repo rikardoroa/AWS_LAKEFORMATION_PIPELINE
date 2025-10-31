@@ -47,21 +47,53 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       "arn:aws:logs:*:*:log-group:/aws/scheduler/${var.scheduler_name}:*"
     ]
   }
-
   statement {
-    sid    = "S3AndKMSAccess"
+    sid    = "LambdaKinesisS3Pipeline"
     effect = "Allow"
+
     actions = [
-      "s3:ListBucket",
+      "kinesis:DescribeStream",
+      "kinesis:PutRecord",
+      "kinesis:PutRecords",
+      "kinesis:GetRecords",
+      "kinesis:GetShardIterator",
+      "kinesis:ListShards",
+      "s3:AbortMultipartUpload",
       "s3:GetBucketLocation",
-      "s3:CreateBucket",
-      "s3:DeleteBucket",
-      "s3:PutObject",
       "s3:GetObject",
-      "s3:DeleteObject",
+      "s3:ListBucket",
+      "s3:ListBucketMultipartUploads",
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
     ]
-    resources = ["*"]
+
+    resources = [
+      var.kinesis_stream_arn,
+      "arn:aws:s3:::${var.bucket_name}",
+      "arn:aws:s3:::${var.bucket_name}/*",
+      var.kms_key_arn
+    ]
   }
+
+  # statement {
+  #   sid    = "S3AndKMSAccess"
+  #   effect = "Allow"
+  #   actions = [
+  #     "s3:ListBucket",
+  #     "s3:GetBucketLocation",
+  #     "s3:CreateBucket",
+  #     "s3:DeleteBucket",
+  #     "s3:PutObject",
+  #     "s3:GetObject",
+  #     "s3:DeleteObject",
+  #   ]
+  #   resources = ["*"]
+  # }
 
    statement {
     sid    = "AllowEventBridgeInvokeLambda"

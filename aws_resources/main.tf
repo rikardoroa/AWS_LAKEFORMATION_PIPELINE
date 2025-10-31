@@ -10,6 +10,7 @@ module "lambda_utils" {
   secret_key  = var.secret_key
   scheduler_name = module.eventbridge_utils.scheduler_name
   firehose_name = module.kinesis_utils.firehose_name
+  kinesis_stream_arn = module.kinesis_utils.kinesis_stream_arn
 }
 
 # bucket module

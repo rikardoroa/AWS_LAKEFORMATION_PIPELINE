@@ -51,3 +51,7 @@ variable "firehose_name"{
 variable "scheduler_name"{
   type = string
 }
+
+variable "kinesis_stream_arn"{
+  type = string
+}
