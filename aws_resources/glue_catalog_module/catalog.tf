@@ -130,14 +130,14 @@ resource "aws_lakeformation_resource" "data_location" {
 
 # **Permiso de Data Location** a la ruta (LF controla acceso al S3 en el Data Lake)
 resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
-  principal  = aws_iam_role.glue_role.arn
+  principal   = aws_iam_role.glue_role.arn
   permissions = ["DATA_LOCATION_ACCESS"]
 
   data_location {
-    catalog_id = data.aws_caller_identity.current.account_id
-    resource_arn = "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/"
+    arn = "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/"
   }
 }
+
 
 # **Permisos sobre la Database** para que el crawler cree/actualice tablas
 resource "aws_lakeformation_permissions" "crawler_database_perm" {
