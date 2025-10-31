@@ -77,10 +77,10 @@ resource "aws_iam_role_policy" "glue_lakeformation_policy" {
 resource "aws_lakeformation_data_lake_settings" "default" {
   admins = [
     aws_iam_role.glue_role.arn,
-    var.lambda_role,
-    "IAM_ALLOWED_PRINCIPALS" # 🔑 habilita acceso para Terraform executor
+    var.lambda_role
   ]
 
+  # 🔓 Esto sí permite acceso global por IAM temporalmente
   create_database_default_permissions {
     permissions = ["ALL"]
     principal   = "IAM_ALLOWED_PRINCIPALS"
