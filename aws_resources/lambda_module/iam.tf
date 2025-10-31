@@ -104,3 +104,12 @@ resource "aws_iam_role_policy" "pipeline_dev_policy_attachment_cb_api" {
   role   = aws_iam_role.iam_dev_role_cb_api.id
   policy = data.aws_iam_policy_document.pipeline_dev_policy_cb_api.json
 }
+
+resource "aws_lakeformation_permissions" "lambda_db_permissions" {
+  principal   = aws_iam_role.iam_dev_role_cb_api.arn
+  permissions = ["CREATE_TABLE", "ALTER", "DESCRIBE"]
+
+  database {
+    name = aws_glue_catalog_database.coinbase_db.name
+  }
+}
