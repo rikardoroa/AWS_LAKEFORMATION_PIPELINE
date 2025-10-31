@@ -128,15 +128,24 @@ resource "aws_lakeformation_resource" "data_location" {
 }
 
 ##########################################
-# 🧱 8️⃣ JSON Classifier
+# 🧱 8️⃣ Classifiers JSON + JSON GZIP
 ##########################################
 resource "aws_glue_classifier" "json_classifier" {
   name = "coinbase_json_classifier"
   json_classifier { json_path = "$" }
 }
 
+resource "aws_glue_classifier" "json_gzip_classifier" {
+  name = "coinbase_json_gzip_classifier"
+
+  grok_classifier {
+    classification = "json"
+    grok_pattern   = ".*"
+  }
+}
+
 ##########################################
-# 🧩 9️⃣ Glue Crawler - Detecta y actualiza tablas
+# 🧩 9️⃣ Glue Crawler - Detecta y actualiza tablas JSON GZIP
 ##########################################
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
@@ -145,12 +154,16 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   description   = "Crawler que detecta archivos JSON GZIP particionados"
   table_prefix  = ""
 
-  # 🔥 IMPORTANTE: apunta directamente a la carpeta que contiene los .gz
+  # 🔥 Ruta exacta donde Firehose guarda los archivos
   s3_target {
     path = "s3://${var.bucket_name}/coinbase/ingest/"
   }
 
-  classifiers = [aws_glue_classifier.json_classifier.name]
+  # 🧠 Usa ambos classifiers para detectar JSON y JSON comprimido (.gz)
+  classifiers = [
+    aws_glue_classifier.json_classifier.name,
+    aws_glue_classifier.json_gzip_classifier.name
+  ]
 
   recrawl_policy {
     recrawl_behavior = "CRAWL_EVERYTHING"
@@ -161,20 +174,30 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
     delete_behavior = "LOG"
   }
 
+  # ⚙️ Configuración avanzada para archivos GZIP particionados
   configuration = jsonencode({
     Version  = 1.0,
-    Grouping = { TableGroupingPolicy = "CombineCompatibleSchemas" }
+    Grouping = {
+      TableGroupingPolicy = "CombineCompatibleSchemas"
+    },
+    CrawlerOutput = {
+      Partitions = { AddOrUpdateBehavior = "InheritFromTable" }
+    },
+    CompressionType = "gzip"
   })
 
+  # ⏱️ Ejecuta cada 6 minutos
   schedule = "cron(0/6 * * * ? *)"
 
+  # ⚡ Dependencias críticas
   depends_on = [
     aws_glue_catalog_database.coinbase_db,
     aws_iam_role_policy.glue_s3_policy,
-    aws_iam_role_policy.glue_lakeformation_policy
+    aws_iam_role_policy.glue_lakeformation_policy,
+    aws_glue_classifier.json_classifier,
+    aws_glue_classifier.json_gzip_classifier
   ]
 }
-
 
 ##########################################
 # 📜 🔟 Permisos adicionales de Logs
@@ -250,7 +273,7 @@ resource "aws_lakeformation_permissions" "crawler_tables_perms" {
 }
 
 ##########################################
-# 🧩 1️⃣2️⃣ Permisos Lake Formation – LAMBDA (FINAL)
+# 🧩 1️⃣2️⃣ Permisos Lake Formation – LAMBDA
 ##########################################
 resource "aws_lakeformation_permissions" "lambda_data_location_access" {
   catalog_id  = data.aws_caller_identity.current.account_id
@@ -289,21 +312,3 @@ resource "aws_lakeformation_permissions" "lambda_table_access" {
 data "aws_s3_bucket" "main" {
   bucket = var.bucket_name
 }
-
-
-# resource "aws_lakeformation_permissions" "lambda_specific_table_access" {
-#   catalog_id  = data.aws_caller_identity.current.account_id
-#   principal   = var.lambda_role
-#   permissions = ["DESCRIBE", "SELECT"]
-
-#   table {
-#     database_name = aws_glue_catalog_database.coinbase_db.name
-#     name           = "coinbase_currency_prices"
-#   }
-
-#   depends_on = [
-#     aws_glue_catalog_database.coinbase_db,
-#     aws_lakeformation_permissions.lambda_data_location_access,
-#     aws_lakeformation_data_lake_settings.default
-#   ]
-# }
