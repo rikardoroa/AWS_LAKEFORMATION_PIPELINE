@@ -48,6 +48,10 @@ variable "secret_key"{
   type = string
 }
 
+variable "crawler_role"{
+  type = string
+}
+
 # variable "firehose_name"{
 #   type = string
 # }

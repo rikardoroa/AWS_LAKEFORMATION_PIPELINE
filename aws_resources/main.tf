@@ -20,6 +20,7 @@ module "lambda_utils" {
   api_key     = var.api_key
   secret_key  = var.secret_key
   database    = module.glue_catalog_utils.database
+  crawler_role = module.glue_catalog_utils.crawler_role
   # ⚠️ Do NOT reference eventbridge or glue here
 }
 
