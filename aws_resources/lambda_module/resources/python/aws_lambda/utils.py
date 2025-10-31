@@ -79,12 +79,12 @@ class DBUtils:
             }
 
             logger.info(f"Creating or updating Glue table: {self.table_name}")
-            self.glue_client.create_table(DatabaseName=self.database, TableInput=table_input)
+            self.glue_client.create_table(DatabaseName=self.database_name, TableInput=table_input)
             logger.info(f"✅ Glue table {self.table_name} created successfully")
 
         except self.glue_client.exceptions.AlreadyExistsException:
             logger.info(f"Table {self.table_name} already exists — updating schema")
-            self.glue_client.update_table(DatabaseName=self.database, TableInput=table_input)
+            self.glue_client.update_table(DatabaseName=self.database_name, TableInput=table_input)
 
         except Exception as e:
             logger.error(f"❌ Error creating Glue table: {e}")
