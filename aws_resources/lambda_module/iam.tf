@@ -96,6 +96,22 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
     ]
   }
 
+  statement {
+    sid    = "LakeFormationAccess"
+    effect = "Allow"
+    actions = [
+      "lakeformation:ListPermissions",
+      "lakeformation:GrantPermissions",
+      "lakeformation:GetDataAccess",
+      "lakeformation:GetEffectivePermissionsForPath"
+    ]
+    resources = [
+      "arn:aws:lakeformation:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
+      "arn:aws:lakeformation:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:resource/*"
+    ]
+  }
+
+
 }
 
 # --- Attach inline policy to Lambda role ---
