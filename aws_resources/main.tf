@@ -25,5 +25,12 @@ module "kinesis_utils" {
 }
 
 
+# eventbrigde module
+module "eventbridge_utils" {
+  source  = "./eventbridge_module"
+  lambda_arn  =  module.lambda_utils.lambda_arn
+  lambda_role =  module.lambda_utils.lambda_role
+}
+
 
 
