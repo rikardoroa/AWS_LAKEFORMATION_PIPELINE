@@ -147,11 +147,13 @@ resource "aws_lakeformation_permissions" "crawler_database_perm" {
 }
 
 # 🔐 Catalog permission (NEW)
-# 🔐 Catalog permission (FIXED ✅)
 resource "aws_lakeformation_permissions" "crawler_catalog_perm" {
   principal   = aws_iam_role.glue_role.arn
   permissions = ["DESCRIBE"]
-  catalog_id  = data.aws_caller_identity.current.account_id
+
+  catalog_resource {
+    catalog_id = data.aws_caller_identity.current.account_id
+  }
 }
 
 
