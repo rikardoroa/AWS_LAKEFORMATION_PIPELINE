@@ -77,7 +77,7 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
   role_arn = aws_iam_role.firehose_role.arn
 
   extended_s3_configuration {
-    bucket_arn         = module.bucket_utils.bucket_arn != null ? module.bucket_utils.bucket_arn : var.bucket_arn
+    bucket_arn         = var.bucket_arn
     compression_format = "GZIP"
     kms_key_arn        = var.kms_key_arn
 
