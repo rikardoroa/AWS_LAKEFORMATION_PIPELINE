@@ -116,28 +116,39 @@ resource "aws_iam_role_policy" "pipeline_dev_policy_attachment_cb_api" {
   policy = data.aws_iam_policy_document.pipeline_dev_policy_cb_api.json
 }
 
+# --- Lake Formation: Database permissions
 resource "aws_lakeformation_permissions" "lambda_db_permissions" {
   principal   = aws_iam_role.iam_dev_role_cb_api.arn
   permissions = ["CREATE_TABLE", "ALTER", "DESCRIBE"]
 
   database {
-    name = var.database
+    name = var.database_name
   }
 }
 
-
-#Register the S3 path in Lake Formation
+# --- Lake Formation: Register S3 path
 resource "aws_lakeformation_resource" "coinbase_data_location" {
   arn      = "arn:aws:s3:::${var.bucket_name}"
   role_arn = aws_iam_role.iam_dev_role_cb_api.arn
 }
 
-#Grant Lake Formation permission for the Lambda role to access that S3 data location
+# --- Lake Formation: Grant DATA_LOCATION_ACCESS on S3
 resource "aws_lakeformation_permissions" "lambda_s3_data_access" {
   principal   = aws_iam_role.iam_dev_role_cb_api.arn
   permissions = ["DATA_LOCATION_ACCESS"]
 
   data_location {
     arn = aws_lakeformation_resource.coinbase_data_location.arn
+  }
+}
+
+# --- Lake Formation: Grant DESCRIBE + SELECT on table
+resource "aws_lakeformation_permissions" "lambda_table_access" {
+  principal   = aws_iam_role.iam_dev_role_cb_api.arn
+  permissions = ["DESCRIBE", "SELECT"]
+
+  table {
+    database_name = var.database_name
+    name          = var.table
   }
 }
