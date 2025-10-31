@@ -117,12 +117,8 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
 
 resource "aws_lakeformation_data_lake_settings" "admins" {
   admins = [
-    {
-      data_lake_principal_identifier = aws_iam_role.iam_dev_role_cb_api.arn
-    },
-    {
-      data_lake_principal_identifier = var.crawler_role
-    }
+    aws_iam_role.iam_dev_role_cb_api.arn,
+    var.crawler_role
   ]
 }
 
