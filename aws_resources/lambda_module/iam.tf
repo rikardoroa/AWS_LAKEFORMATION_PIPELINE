@@ -146,5 +146,5 @@ resource "aws_lambda_permission" "allow_scheduler_invoke" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_function.function_name
   principal     = "scheduler.amazonaws.com"
-  source_arn    = aws_scheduler_schedule.coinbase_scheduler.arn
+  source_arn    = var.scheduler_arn
 }
