@@ -116,10 +116,9 @@ resource "aws_iam_role_policy" "firehose_policy" {
           "kinesis:DescribeStreamSummary",
           "kinesis:GetShardIterator",
           "kinesis:GetRecords",
-          "kinesis:ListShards",
-          "kinesis:PutRecord"
+          "kinesis:ListShards"
         ],
-        Resource: [aws_kinesis_stream.coinbase_stream.arn, var.lambda_arn]
+        Resource: aws_kinesis_stream.coinbase_stream.arn
       },
       # Allow writing to S3 bucket
       {

@@ -80,6 +80,22 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
     ]
     resources = [var.kms_key_arn]
   }
+
+  statement {
+    sid    = "KinesisPutRecord"
+    effect = "Allow"
+    actions = [
+      "kinesis:DescribeStream",
+      "kinesis:DescribeStreamSummary",
+      "kinesis:ListShards",
+      "kinesis:PutRecord",
+      "kinesis:PutRecords"
+    ]
+    resources = [
+      "arn:aws:kinesis:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stream/${var.stream_name}"
+    ]
+  }
+
 }
 
 # --- Attach inline policy to Lambda role ---
