@@ -56,6 +56,11 @@ variable "data_location"{
   type = string
 }
 
+variable "terraform_bucket"{
+  type = string
+  default = "terraform-api-data-coinbase"
+}
+
 # variable "firehose_name"{
 #   type = string
 # }

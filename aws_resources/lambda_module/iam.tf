@@ -46,7 +46,9 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
     ]
     resources = [
       "arn:aws:s3:::${var.bucket_name}",
-      "arn:aws:s3:::${var.bucket_name}/*"
+      "arn:aws:s3:::${var.bucket_name}/*",
+      "arn:aws:s3:::${var.terraform_bucket}",
+      "arn:aws:s3:::${var.terraform_bucket}/terraform/state/*"
     ]
   }
 
