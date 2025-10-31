@@ -41,7 +41,11 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       "logs:DeleteLogGroup",
       "logs:DeleteLogStream"
     ]
-    resources = ["*"]
+    resources = [
+      "arn:aws:logs:*:*:log-group:/aws/lambda/${aws_lambda_function.lambda_function.function_name}:*",
+      "arn:aws:logs:*:*:log-group:/aws/kinesisfirehose/${var.firehose_name}:*",
+      "arn:aws:logs:*:*:log-group:/aws/scheduler/${var.scheduler_name}:*"
+    ]
   }
 
   statement {

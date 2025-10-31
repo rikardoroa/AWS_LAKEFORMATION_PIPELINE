@@ -8,6 +8,8 @@ module "lambda_utils" {
   stream_name = module.kinesis_utils.stream_name
   api_key     = var.api_key
   secret_key  = var.secret_key
+  firehose_name = module.kinesis_utils.firehose_name
+  scheduler_name = module.eventbridge_utils.scheduler_name
 }
 
 # bucket module
