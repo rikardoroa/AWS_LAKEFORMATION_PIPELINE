@@ -338,8 +338,6 @@ resource "aws_iam_role_policy" "pipeline_dev_policy_attachment_cb_api" {
   policy = data.aws_iam_policy_document.pipeline_dev_policy_cb_api.json
 }
 
-# ❌ ELIMINAR COMPLETAMENTE este bloque - ya está en catalog.tf
-# resource "aws_lakeformation_data_lake_settings" "admins" { ... }
 
 # Database permissions - SIN depender de data_lake_settings local
 resource "aws_lakeformation_permissions" "lambda_db_permissions" {
@@ -348,6 +346,12 @@ resource "aws_lakeformation_permissions" "lambda_db_permissions" {
 
   database {
     name = var.database
+  }
+  lifecycle {
+    precondition {
+      condition     = var.crawler_role != ""
+      error_message = "Lake Formation admin (crawler_role) must be configured first"
+    }
   }
   
   # El data_lake_settings se gestiona en el módulo glue_catalog
