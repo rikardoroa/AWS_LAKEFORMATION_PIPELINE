@@ -49,13 +49,13 @@ class DBUtils:
                     },
                     "Compressed": True,
                 },
-                # "PartitionKeys": [
-                #     {"Name": "partition_date", "Type": "string"},
-                #     {"Name": "year", "Type": "string"},
-                #     {"Name": "month", "Type": "string"},
-                #     {"Name": "day", "Type": "string"},
-                #     {"Name": "hour", "Type": "string"},
-                # ],
+                "PartitionKeys": [
+                    {"Name": "partition_date", "Type": "string"},
+                    {"Name": "year", "Type": "string"},
+                    {"Name": "month", "Type": "string"},
+                    {"Name": "day", "Type": "string"},
+                    {"Name": "hour", "Type": "string"},
+                ],
                 "TableType": "EXTERNAL_TABLE",
                 "Parameters": {"classification": "json"},
             }
