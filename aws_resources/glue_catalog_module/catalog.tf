@@ -239,6 +239,26 @@ resource "aws_lakeformation_permissions" "crawler_database_perms" {
   ]
 }
 
+
+resource "aws_lakeformation_permissions" "lambda_glue_create" {
+  catalog_id = data.aws_caller_identity.current.account_id
+  principal  = aws_iam_role.iam_dev_role_cb_api.arn
+  permissions = ["CREATE_TABLE"]
+
+  resource {
+    database {
+      name = aws_glue_catalog_database.coinbase_db.name
+    }
+  }
+
+  depends_on = [
+    aws_glue_catalog_database.coinbase_db,
+    aws_lakeformation_data_lake_settings.default
+  ]
+}
+
+
+
 resource "aws_lakeformation_permissions" "crawler_tables_perms" {
   catalog_id  = data.aws_caller_identity.current.account_id
   principal   = aws_iam_role.glue_role.arn
