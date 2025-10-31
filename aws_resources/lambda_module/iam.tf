@@ -71,7 +71,6 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       "kms:GenerateDataKey*",
       "kms:DescribeKey"
     ]
-
     resources = [
       var.kinesis_stream_arn,
       "arn:aws:s3:::${var.bucket_name}",
@@ -79,6 +78,15 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       var.kms_key_arn
     ]
   }
+
+  # statement {
+  #   sid    = "AllowEventBridgeInvokeLambda"
+  #   effect = "Allow"
+  #   actions = [
+  #     "lambda:InvokeFunction"
+  #   ]
+  #   resources = ["aws_scheduler_schedule.coinbase_scheduler.arn"]
+  # }
 
   # statement {
   #   sid    = "S3AndKMSAccess"
@@ -95,42 +103,33 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
   #   resources = ["*"]
   # }
 
-   statement {
-    sid    = "AllowEventBridgeInvokeLambda"
-    effect = "Allow"
-    actions = [
-      "lambda:InvokeFunction"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    sid    = "KMSKeyPermissions"
-    effect = "Allow"
-    actions = [
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:GenerateDataKey*",
-      "kms:DescribeKey"
-    ]
-    resources = ["*"]
-  }
+  # statement {
+  #   sid    = "KMSKeyPermissions"
+  #   effect = "Allow"
+  #   actions = [
+  #     "kms:Encrypt",
+  #     "kms:Decrypt",
+  #     "kms:GenerateDataKey*",
+  #     "kms:DescribeKey"
+  #   ]
+  #   resources = ["*"]
+  # }
 
 
 
-statement {
-  sid    = "KinesisStreamAccess"
-  effect = "Allow"
-  actions = [
-    "kinesis:DescribeStream",
-    "kinesis:GetShardIterator",
-    "kinesis:GetRecords",
-    "kinesis:ListShards",
-    "kinesis:PutRecord",
-    "kinesis:PutRecords"
-  ]
-  resources = ["*"]
-}
+# statement {
+#   sid    = "KinesisStreamAccess"
+#   effect = "Allow"
+#   actions = [
+#     "kinesis:DescribeStream",
+#     "kinesis:GetShardIterator",
+#     "kinesis:GetRecords",
+#     "kinesis:ListShards",
+#     "kinesis:PutRecord",
+#     "kinesis:PutRecords"
+#   ]
+#   resources = ["*"]
+# }
 
 }
 
@@ -139,4 +138,13 @@ resource "aws_iam_role_policy" "lambda_permissions" {
   name   = "lambda_logging_with_layer"
   role   = aws_iam_role.iam_dev_role_cb_api.name
   policy = data.aws_iam_policy_document.pipeline_dev_policy_cb_api.json
+}
+
+
+resource "aws_lambda_permission" "allow_scheduler_invoke" {
+  statement_id  = "AllowEventBridgeInvokeLambda"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_function.function_name
+  principal     = "scheduler.amazonaws.com"
+  source_arn    = aws_scheduler_schedule.coinbase_scheduler.arn
 }

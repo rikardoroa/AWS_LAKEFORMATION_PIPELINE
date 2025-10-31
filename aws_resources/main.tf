@@ -11,6 +11,7 @@ module "lambda_utils" {
   scheduler_name = module.eventbridge_utils.scheduler_name
   firehose_name = module.kinesis_utils.firehose_name
   kinesis_stream_arn = module.kinesis_utils.kinesis_stream_arn
+  scheduler_arn = module.eventbridge_utils.scheduler_arn
 }
 
 # bucket module

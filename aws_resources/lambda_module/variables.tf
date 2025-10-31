@@ -55,3 +55,7 @@ variable "scheduler_name"{
 variable "kinesis_stream_arn"{
   type = string
 }
+
+variable "scheduler_arn"{
+  type = string
+}
