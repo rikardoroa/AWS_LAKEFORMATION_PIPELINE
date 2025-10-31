@@ -52,6 +52,10 @@ variable "crawler_role"{
   type = string
 }
 
+variable "data_location"{
+  type = string
+}
+
 # variable "firehose_name"{
 #   type = string
 # }

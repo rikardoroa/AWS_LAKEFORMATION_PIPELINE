@@ -134,6 +134,8 @@ resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
   data_location {
     arn = aws_lakeformation_resource.data_location.arn
   }
+
+  depends_on = [aws_lakeformation_resource.data_location]
 }
 
 # 🔐 Database-level permissions
@@ -151,6 +153,10 @@ resource "aws_lakeformation_permissions" "crawler_catalog_perm" {
   principal         = aws_iam_role.glue_role.arn
   permissions       = ["DESCRIBE"]
   catalog_resource  = true
+  depends_on = [
+    aws_glue_catalog_database.coinbase_db,
+    aws_lakeformation_resource.data_location
+  ]
 }
 
 
@@ -193,4 +199,30 @@ resource "aws_glue_crawler" "coinbase_s3_crawler" {
   })
 
   schedule = "cron(0/6 * * * ? *)"
+}
+
+
+
+# logs for glue role
+data "aws_iam_policy_document" "glue_logs_extra" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "logs:DescribeLogStreams"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "glue_logs_extra" {
+  name   = "glue_logs_extra"
+  policy = data.aws_iam_policy_document.glue_logs_extra.json
+}
+
+resource "aws_iam_role_policy_attachment" "glue_logs_attach" {
+  role       = aws_iam_role.glue_role.name
+  policy_arn = aws_iam_policy.glue_logs_extra.arn
 }

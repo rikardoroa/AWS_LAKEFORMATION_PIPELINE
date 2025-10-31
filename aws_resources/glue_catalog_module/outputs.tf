@@ -9,3 +9,7 @@ output "crawler"{
 output "crawler_role"{
     value = aws_iam_role.glue_role.arn
 }
+
+output "data_location"{
+    value = aws_lakeformation_resource.data_location.arn
+}
