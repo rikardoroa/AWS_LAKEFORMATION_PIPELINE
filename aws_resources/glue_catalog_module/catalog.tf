@@ -61,6 +61,9 @@
 #   })
 # }
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 # --- Glue IAM Role ---
 resource "aws_iam_role" "glue_role" {
   name = "iam_glue_crawler_role"
