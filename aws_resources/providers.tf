@@ -29,4 +29,19 @@ terraform {
 
 provider "aws" {
   region = "us-east-2"
+
+  assume_role {
+    role_arn     =  module.lambda_utils.lambda_role
+    session_name = "terraform-lakeformation"
+  }
 }
+
+
+# provider "aws" {
+#   region = "us-east-2"
+
+#   assume_role {
+#     role_arn     =  module.lambda_utils.lambda_arn
+#     session_name = "terraform-lakeformation"
+#   }
+# }
