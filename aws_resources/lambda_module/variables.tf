@@ -47,7 +47,3 @@ variable "secret_key"{
 variable "firehose_name"{
   type = string
 }
-
-variable "scheduler_name"{
-  type = string
-}
