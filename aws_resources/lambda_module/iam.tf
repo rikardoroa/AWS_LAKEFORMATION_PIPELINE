@@ -48,10 +48,10 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       "arn:aws:logs:*:*:log-group:/aws/scheduler/${var.scheduler_name}:*"
     ]
   }
+  
   statement {
     sid    = "S3K"
     effect = "Allow"
-
     actions = [
       "s3:AbortMultipartUpload",
       "s3:GetBucketLocation",
@@ -67,55 +67,74 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       "kms:DescribeKey"
     ]
     resources = [
-      var.kinesis_stream_arn,
       "arn:aws:s3:::${var.bucket_name}",
       "arn:aws:s3:::${var.bucket_name}/*",
       var.kms_key_arn
     ]
   }
+
+  # NUEVO: Permisos específicos para Kinesis
   statement {
-  sid    = "GlueAccess"
-  effect = "Allow"
-  actions = [
-    "glue:CreateDatabase",
-    "glue:GetDatabase",
-    "glue:GetDatabases",
-    "glue:CreateTable",
-    "glue:UpdateTable",
-    "glue:GetTable",
-    "glue:GetTables",
-    "glue:DeleteTable",
-    "glue:GetPartition",
-    "glue:GetPartitions",
-    "glue:BatchCreatePartition",
-    "glue:BatchDeletePartition",
-    "glue:BatchGetPartition",
-    "glue:GetCrawler",
-    "glue:GetCrawlers",
-    "glue:StartCrawler",
-    "glue:UpdateCrawler",
-    "glue:UpdatePartition",
-    "glue:CreateCrawler",
-    "glue:GetCatalogImportStatus",
-    "lakeformation:GetDataAccess",
-    "lakeformation:GrantPermissions",
-    "lakeformation:RevokePermissions",
-    "lakeformation:ListPermissions",
-    "lakeformation:GetEffectivePermissionsForPrincipal",
-    "lakeformation:GetResourceLFTags",
-    "lakeformation:ListLFTags",
-    "lakeformation:GetLFTag",
-    "lakeformation:SearchDatabasesByLFTags",
-    "lakeformation:SearchTablesByLFTags"
-  ]
-  resources = [
-    "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
-    "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/${var.database}",
-    "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.database}/*",
-    "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:crawler/${var.crawler}",
-    "arn:aws:lakeformation:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog:${data.aws_caller_identity.current.account_id}"
-  ]
-}
+    sid    = "KinesisAccess"
+    effect = "Allow"
+    actions = [
+      "kinesis:DescribeStream",
+      "kinesis:DescribeStreamSummary",
+      "kinesis:GetRecords",
+      "kinesis:GetShardIterator",
+      "kinesis:ListShards",
+      "kinesis:ListStreams",
+      "kinesis:PutRecord",
+      "kinesis:PutRecords"
+    ]
+    resources = [
+      var.kinesis_stream_arn
+    ]
+  }
+
+  statement {
+    sid    = "GlueAccess"
+    effect = "Allow"
+    actions = [
+      "glue:CreateDatabase",
+      "glue:GetDatabase",
+      "glue:GetDatabases",
+      "glue:CreateTable",
+      "glue:UpdateTable",
+      "glue:GetTable",
+      "glue:GetTables",
+      "glue:DeleteTable",
+      "glue:GetPartition",
+      "glue:GetPartitions",
+      "glue:BatchCreatePartition",
+      "glue:BatchDeletePartition",
+      "glue:BatchGetPartition",
+      "glue:GetCrawler",
+      "glue:GetCrawlers",
+      "glue:StartCrawler",
+      "glue:UpdateCrawler",
+      "glue:UpdatePartition",
+      "glue:CreateCrawler",
+      "glue:GetCatalogImportStatus",
+      "lakeformation:GetDataAccess",
+      "lakeformation:GrantPermissions",
+      "lakeformation:RevokePermissions",
+      "lakeformation:ListPermissions",
+      "lakeformation:GetEffectivePermissionsForPrincipal",
+      "lakeformation:GetResourceLFTags",
+      "lakeformation:ListLFTags",
+      "lakeformation:GetLFTag",
+      "lakeformation:SearchDatabasesByLFTags",
+      "lakeformation:SearchTablesByLFTags"
+    ]
+    resources = [
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/${var.database}",
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${var.database}/*",
+      "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:crawler/${var.crawler}",
+      "arn:aws:lakeformation:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog:${data.aws_caller_identity.current.account_id}"
+    ]
+  }
 }
 
 # Attach Inline Policy to Role
@@ -124,7 +143,6 @@ resource "aws_iam_role_policy" "lambda_permissions" {
   role   = aws_iam_role.iam_dev_role_cb_api.name
   policy = data.aws_iam_policy_document.pipeline_dev_policy_cb_api.json
 }
-
 
 resource "aws_lambda_permission" "allow_scheduler_invoke" {
   statement_id  = "AllowEventBridgeInvokeLambda"
