@@ -29,7 +29,7 @@ class DBUtils:
         """
         try:
             table_input = {
-                "Name": self.table,
+                "Name": self.table_name,
                 "Description": "Automatically generated Glue table from Lambda (Coinbase Prices)",
                 "StorageDescriptor": {
                     "Columns": [
@@ -49,24 +49,24 @@ class DBUtils:
                     },
                     "Compressed": True,
                 },
-                "PartitionKeys": [
-                    {"Name": "partition_date", "Type": "string"},
-                    {"Name": "year", "Type": "string"},
-                    {"Name": "month", "Type": "string"},
-                    {"Name": "day", "Type": "string"},
-                    {"Name": "hour", "Type": "string"},
-                ],
+                # "PartitionKeys": [
+                #     {"Name": "partition_date", "Type": "string"},
+                #     {"Name": "year", "Type": "string"},
+                #     {"Name": "month", "Type": "string"},
+                #     {"Name": "day", "Type": "string"},
+                #     {"Name": "hour", "Type": "string"},
+                # ],
                 "TableType": "EXTERNAL_TABLE",
                 "Parameters": {"classification": "json"},
             }
 
             # Check if the table already exists
             try:
-                self.glue.get_table(DatabaseName=self.database, Name=self.table)
+                self.glue.get_table(DatabaseName=self.database, Name=self.table_name)
                 logger.info(f"Table {self.table} already exists, attempting to update.")
                 self.glue.update_table(DatabaseName=self.database, TableInput=table_input)
             except self.glue.exceptions.EntityNotFoundException:
-                logger.info(f"Creating table {self.table} in database {self.database}")
+                logger.info(f"Creating table {self.table_name} in database {self.database}")
                 self.glue.create_table(DatabaseName=self.database, TableInput=table_input)
 
             self.ensure_permissions_on_existing_table()
