@@ -75,12 +75,14 @@ resource "aws_iam_role_policy" "glue_lakeformation_policy" {
 # 🧑‍💼 4️⃣ Data Lake Settings - Glue + Lambda admins
 ##########################################
 resource "aws_lakeformation_data_lake_settings" "default" {
+  catalog_id = local.catalog_id
+
   admins = [
     aws_iam_role.glue_role.arn,
-    var.lambda_role
+    var.lambda_role,
+    "arn:aws:iam::163257074638:user/rroatest"
   ]
 
-  # 🔓 Esto sí permite acceso global por IAM temporalmente
   create_database_default_permissions {
     permissions = ["ALL"]
     principal   = "IAM_ALLOWED_PRINCIPALS"
@@ -96,7 +98,6 @@ resource "aws_lakeformation_data_lake_settings" "default" {
     aws_iam_role_policy.glue_lakeformation_policy
   ]
 }
-
 ##########################################
 # ⏳ 5️⃣ Espera de propagación
 ##########################################
