@@ -51,10 +51,9 @@ class CoinBaseStream:
                     logger.error(f"Failed to send record: {response}")
             
             logger.info(f"Successfully sent {records_sent} records to Kinesis")
-            #     prices_payload.append(prices)
             
-            # currencies_df = pd.DataFrame(prices_payload)
-            # self.utils.create_data_catalog_table(currencies_df)
+            self.utils.ensure_permissions_on_existing_table()
+            
 
         except Exception as e:
             logger.error(f'can not generate the kinesis stream, please verify the configuration:{e}')
