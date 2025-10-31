@@ -64,9 +64,23 @@ resource "aws_iam_role_policy" "glue_lakeformation_policy" {
   })
 }
 
-# 4️⃣ SOLO Glue como admin inicialmente
+# 4️⃣ Data Lake Settings - AMBOS ROLES COMO ADMIN
 resource "aws_lakeformation_data_lake_settings" "default" {
-  admins = [aws_iam_role.glue_role.arn]
+  admins = [
+    aws_iam_role.glue_role.arn,
+    var.lambda_role 
+  ]
+  
+  # IMPORTANTE: Permitir acceso sin Lake Formation
+  create_database_default_permissions {
+    permissions = ["ALL"]
+    principal   = "IAM_ALLOWED_PRINCIPALS"
+  }
+  
+  create_table_default_permissions {
+    permissions = ["ALL"]
+    principal   = "IAM_ALLOWED_PRINCIPALS"
+  }
   
   depends_on = [
     aws_iam_role.glue_role,
@@ -111,7 +125,7 @@ resource "aws_glue_classifier" "json_classifier" {
   }
 }
 
-# 9️⃣ Glue crawler - SIN PREFIJO
+# 9️⃣ Glue crawler
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
   name          = "coinbase_s3_crawler"
   role          = aws_iam_role.glue_role.arn
