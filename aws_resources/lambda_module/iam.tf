@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
     ]
   }
 
-  Allow access to Glue (for catalog creation, if your Lambda registers tables)
+
   statement {
     sid    = "GlueCatalogAccess"
     effect = "Allow"
