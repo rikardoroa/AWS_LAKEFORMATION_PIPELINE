@@ -207,7 +207,7 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
     compression_format = "GZIP"
 
    
-    prefix              = "coinbase/ingest/base=!{partitionKeyFromQuery:base}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
+    prefix              = "coinbase/ingest/date=!{partitionKeyFromQuery:date}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
     error_output_prefix = "coinbase/errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
 
     buffering_interval = 60
@@ -230,7 +230,7 @@ resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
         type = "MetadataExtraction"
         parameters {
           parameter_name  = "MetadataExtractionQuery"
-          parameter_value = "{base: .base}"
+          parameter_value = "{date: .date}"
         }
         parameters {
           parameter_name  = "JsonParsingEngine"
