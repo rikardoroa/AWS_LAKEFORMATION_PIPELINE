@@ -26,9 +26,9 @@ variable "database"{
   type = string
 }
 
-variable "crawler"{
-  type = string
-}
+# variable "crawler"{
+#   type = string
+# }
 
 variable "table"{
   description = "athena table"
@@ -52,14 +52,14 @@ variable "firehose_name"{
   type = string
 }
 
-variable "scheduler_name"{
-  type = string
-}
+# variable "scheduler_name"{
+#   type = string
+# }
 
 variable "kinesis_stream_arn"{
   type = string
 }
 
-variable "scheduler_arn"{
-  type = string
-}
+# variable "scheduler_arn"{
+#   type = string
+# }
