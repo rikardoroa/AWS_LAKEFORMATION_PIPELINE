@@ -134,7 +134,7 @@ resource "aws_lakeformation_permissions" "crawler_data_location_perm" {
   permissions = ["DATA_LOCATION_ACCESS"]
 
   data_location {
-    arn = "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/"
+    arn = aws_lakeformation_resource.data_location.arn
   }
 }
 
