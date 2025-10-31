@@ -35,6 +35,59 @@ class DBUtils:
         self.glue_client = boto3.client("glue")
         self.table_name = os.getenv("table")
         self.database_name = os.getenv("database")
+    
+    def create_data_catalog_table(self,df):
+        """
+        Create or update a Glue Catalog table dynamically based on a Pandas DataFrame schema.
+        Also ensures proper Lake Formation permissions.
+        """          
+        try:
+            data_types = {
+                "float64": "double",
+                "object": "string",
+                "datetime64[ns]": "timestamp",
+                "float32": "double",
+                "datetime32[ns]": "timestamp",
+            }
+
+            # Dynamically build columns from DataFrame schema
+            columns = [
+                {"Name": col, "Type": data_types.get(df[col].dtype.name, "string")}
+                for col in df.columns
+            ]
+
+            table_input = {
+                "Name": self.table_name,
+                "StorageDescriptor": {
+                    "Columns": columns,
+                    "Location": f"s3://{self.bucket}/coinbase/ingest/",
+                    "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+                    "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+                    "SerdeInfo": {
+                        "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
+                        "Parameters": {
+                            "paths": "amount,base,currency,currency_id,date"
+                        },
+                    },
+                },
+                "TableType": "EXTERNAL_TABLE",
+                "Parameters": {
+                    "classification": "json"
+                },
+                "PartitionKeys": [{"Name": "partition_date", "Type": "string"}],
+            }
+
+            logger.info(f"Creating or updating Glue table: {self.table_name}")
+            self.glue.create_table(DatabaseName=self.database, TableInput=table_input)
+            logger.info(f"✅ Glue table {self.table_name} created successfully")
+
+        except self.glue.exceptions.AlreadyExistsException:
+            logger.info(f"Table {self.table_name} already exists — updating schema")
+            self.glue.update_table(DatabaseName=self.database, TableInput=table_input)
+
+        except Exception as e:
+            logger.error(f"❌ Error creating Glue table: {e}")
+            raise e
 
     def ensure_permissions_on_existing_table(self):
         """

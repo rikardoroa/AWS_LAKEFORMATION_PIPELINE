@@ -34,12 +34,13 @@ class CoinBaseStream:
 
     def send_coinbase_prices(self):
         try:
-            # prices_payload = []
+            prices_payload = []
             records_sent = 0
             for prices in self.coinbase_api_calls():
                 prices['date'] = datetime.strftime(datetime.today(), '%Y-%m-%d %H:%M:%S')
                 prices['currency_id'] = str(uuid.uuid1())
                 prices['timestamp'] = int(datetime.now().timestamp())
+                prices_payload.append(prices)
                 response = self.kinesis_client.put_record(
                     StreamName=os.getenv('stream_name'),
                     Data=json.dumps(prices) + '\n',
@@ -51,7 +52,8 @@ class CoinBaseStream:
                     logger.error(f"Failed to send record: {response}")
             
             logger.info(f"Successfully sent {records_sent} records to Kinesis")
-            
+            df = pd.DataFrame(prices_payload)
+            self.utils.create_data_catalog_table(df)
             self.utils.ensure_permissions_on_existing_table()
             
 
