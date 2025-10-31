@@ -49,16 +49,10 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
     ]
   }
   statement {
-    sid    = "LambdaKinesisS3Pipeline"
+    sid    = "S3Kms"
     effect = "Allow"
 
     actions = [
-      "kinesis:DescribeStream",
-      "kinesis:PutRecord",
-      "kinesis:PutRecords",
-      "kinesis:GetRecords",
-      "kinesis:GetShardIterator",
-      "kinesis:ListShards",
       "s3:AbortMultipartUpload",
       "s3:GetBucketLocation",
       "s3:GetObject",
@@ -73,7 +67,6 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
       "kms:DescribeKey"
     ]
     resources = [
-      var.kinesis_stream_arn,
       "arn:aws:s3:::${var.bucket_name}",
       "arn:aws:s3:::${var.bucket_name}/*",
       var.kms_key_arn
@@ -124,11 +117,35 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
 }
 }
 
+
+#  firehose policy
+data "aws_iam_policy_document" "pipeline_firehose_stream" {
+  source_json = data.aws_iam_policy_document.pipeline_dev_policy_cb_api.json
+  statement {
+    sid    = "KinesisFirehose"
+    effect = "Allow"
+    actions = [
+      "kinesis:DescribeStream",
+      "kinesis:PutRecord",
+      "kinesis:PutRecords",
+      "kinesis:GetRecords",
+      "kinesis:GetShardIterator",
+      "kinesis:ListShards",
+    ]
+    resources = [ 
+      var.kinesis_stream_arn
+    ]
+  }
+}
+
+
+
+
 # Attach Inline Policy to Role
 resource "aws_iam_role_policy" "lambda_permissions" {
   name   = "lambda_logging_with_layer"
   role   = aws_iam_role.iam_dev_role_cb_api.name
-  policy = data.aws_iam_policy_document.pipeline_dev_policy_cb_api.json
+  policy = data.aws_iam_policy_document.pipeline_firehose_stream.json
 }
 
 
@@ -139,3 +156,6 @@ resource "aws_lambda_permission" "allow_scheduler_invoke" {
   principal     = "scheduler.amazonaws.com"
   source_arn    = var.scheduler_arn
 }
+
+
+
