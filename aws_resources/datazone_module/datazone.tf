@@ -185,14 +185,28 @@ resource "aws_iam_role_policy_attachment" "datazone_environment_attach" {
 
 
 
-
-
 # blueprint
 data "aws_datazone_environment_blueprint" "default_data_lake" {
   domain_id = aws_datazone_domain.coinbase_domain.id
   name      = "DefaultDataLake"
   managed   = true
 }
+
+
+# wait for IAM propagation before configuring blueprint
+resource "time_sleep" "wait_for_iam_propagation" {
+  create_duration = "30s"
+  
+  depends_on = [
+    aws_iam_role_policy_attachment.datazone_domain_execution_attach,
+    aws_iam_role_policy_attachment.datazone_domain_service_attach,
+    aws_iam_role_policy_attachment.datazone_environment_attach,
+    aws_datazone_domain.coinbase_domain
+  ]
+}
+
+
+
 # role for blueprint(env role)
 resource "aws_datazone_environment_blueprint_configuration" "coinbase_blueprint" {
   domain_id                = aws_datazone_domain.coinbase_domain.id
@@ -204,4 +218,5 @@ resource "aws_datazone_environment_blueprint_configuration" "coinbase_blueprint"
       provisioning_role_arn = aws_iam_role.datazone_environment_role.arn
     }
   }
+  depends_on = [time_sleep.wait_for_iam_propagation]
 }
