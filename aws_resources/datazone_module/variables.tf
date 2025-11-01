@@ -5,3 +5,7 @@ variable "kms_key_arn"{
 variable "database_catalog"{
     type = string
 }
+
+variable "bucket_name"{
+    type = string
+}

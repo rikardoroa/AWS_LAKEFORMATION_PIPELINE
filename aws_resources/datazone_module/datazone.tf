@@ -1,27 +1,136 @@
 ##########################################
-# 📦 AWS DataZone Domain (espacio principal)
+# 📌 Data & Identity
 ##########################################
-resource "aws_datazone_domain" "main" {
-  name        = "coinbase-data-domain"
-  description = "DataZone domain for Coinbase LakeFormation data"
-  kms_key_identifier = var.kms_key_arn
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+##########################################
+# 🧩 IAM Role – Domain Execution
+##########################################
+data "aws_iam_policy_document" "assume_role_domain_execution" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["datazone.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+}
+
+resource "aws_iam_role" "datazone_domain_execution_role" {
+  name               = "iam_datazone_domain_execution_role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role_domain_execution.json
+}
+
+resource "aws_iam_policy" "datazone_domain_execution_policy" {
+  name        = "datazone_domain_execution_policy"
+  description = "Allow DataZone to integrate with Glue, LakeFormation, S3 and KMS for Coinbase data"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid: "DataZoneCoreAccess",
+        Effect: "Allow",
+        Action: [
+          # DataZone & Governance
+          "datazone:*",
+
+          # Glue Catalog
+          "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:GetTable",
+          "glue:GetTables",
+          "glue:GetPartitions",
+          "glue:GetCatalogImportStatus",
+
+          # Lake Formation
+          "lakeformation:GetDataAccess",
+          "lakeformation:GetEffectivePermissionsForPath",
+          "lakeformation:ListResources",
+
+          # 3 read
+          "s3:GetObject",
+          "s3:ListBucket",
+
+          # KMS decrypt
+          "kms:Decrypt",
+          "kms:DescribeKey",
+          "kms:GenerateDataKey*"
+        ],
+        Resource: [
+          "*",
+          "arn:aws:s3:::${var.bucket_name}",
+          "arn:aws:s3:::${var.bucket_name}/*",
+          var.kms_key_arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "datazone_domain_execution_attach" {
+  role       = aws_iam_role.datazone_domain_execution_role.name
+  policy_arn = aws_iam_policy.datazone_domain_execution_policy.arn
 }
 
 ##########################################
-# 👥 Proyecto DataZone (opcional)
+# 🧩 IAM Role – Domain Service
+##########################################
+data "aws_iam_policy_document" "assume_role_domain_service" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["datazone.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "datazone_domain_service_role" {
+  name               = "iam_datazone_domain_service_role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role_domain_service.json
+}
+
+# 🔹 Reutilizamos la misma policy para el service role
+resource "aws_iam_role_policy_attachment" "datazone_domain_service_attach" {
+  role       = aws_iam_role.datazone_domain_service_role.name
+  policy_arn = aws_iam_policy.datazone_domain_execution_policy.arn
+}
+
+##########################################
+# 🏗️ DataZone Domain V2
+##########################################
+resource "aws_datazone_domain" "coinbase_domain" {
+  name                  = "coinbase-data-domain"
+  description           = "AWS DataZone domain for Coinbase LakeFormation pipeline"
+  domain_execution_role = aws_iam_role.datazone_domain_execution_role.arn
+  service_role          = aws_iam_role.datazone_domain_service_role.arn
+  domain_version        = "V2"
+  kms_key_identifier    = var.kms_key_arn
+}
+
+##########################################
+# 👥 DataZone Project (opcional)
 ##########################################
 resource "aws_datazone_project" "analytics_team" {
-  domain_identifier = aws_datazone_domain.main.id
+  domain_identifier = aws_datazone_domain.coinbase_domain.id
   name              = "analytics-project"
-  description       = "Project for BI and analytics team to access Coinbase data"
+  description       = "BI & analytics team project for Coinbase Lake data"
 }
 
 ##########################################
-# 📖 DataZone Catalog – publicación del Glue Catalog
+# 💡 Outputs
 ##########################################
-resource "aws_datazone_glue_catalog" "main" {
-  domain_identifier = aws_datazone_domain.main.id
-  name              = "coinbase-datazone-catalog"
-  description       = "Catalog linked to Glue database coinbase_api_s3_data"
-  glue_database_arn = var.database_catalog
+output "datazone_domain_id" {
+  value = aws_datazone_domain.coinbase_domain.id
+}
+
+output "datazone_project_id" {
+  value = aws_datazone_project.analytics_team.id
 }
