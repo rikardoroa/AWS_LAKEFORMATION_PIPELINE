@@ -56,36 +56,63 @@ resource "aws_iam_role_policy" "glue_s3_policy" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
+      # 🔹 Listar el bucket
       {
-        Effect = "Allow",
-        Action = [
+        Sid: "AllowListBucket",
+        Effect: "Allow",
+        Action: [
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ],
+        Resource: "arn:aws:s3:::${var.bucket_name}"
+      },
+
+      # 🔹 Leer/Escribir/Eliminar objetos dentro de coinbase/ingest/*
+      {
+        Sid: "AllowReadWriteObjects",
+        Effect: "Allow",
+        Action: [
           "s3:GetObject",
           "s3:PutObject",
-          "s3:ListBucket",
-          "s3:DeleteObject"
+          "s3:DeleteObject",
+          "s3:GetObjectVersion"
         ],
-        Resource = [
-          "arn:aws:s3:::${var.bucket_name}",
-          "arn:aws:s3:::${var.bucket_name}/*"
+        Resource: [
+          "arn:aws:s3:::${var.bucket_name}/coinbase/*",
+          "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/*"
         ]
-      }
-    ]
-    Statement = [
+      },
+
+      # 🔹 Permitir acceso a los prefijos usados por Firehose
       {
-        Effect = "Allow",
-        Action = [
+        Sid: "AllowFirehosePrefixes",
+        Effect: "Allow",
+        Action: [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        Resource: [
+          "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/*"
+        ]
+      },
+
+      # 🔐 Permisos para usar la clave KMS del bucket
+      {
+        Sid: "AllowKMSAccess",
+        Effect: "Allow",
+        Action: [
           "kms:Encrypt",
           "kms:Decrypt",
           "kms:ReEncrypt*",
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ],
-        Resource = [var.kms_key_arn]
+        Resource: var.kms_key_arn
       }
     ]
-
   })
 }
+
 
 ##########################################
 # 🔐 3️⃣ Política de Lake Formation para Glue
