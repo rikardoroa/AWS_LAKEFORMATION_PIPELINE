@@ -124,3 +124,70 @@ resource "aws_datazone_project" "analytics_team" {
   name              = "analytics-project"
   description       = "BI & analytics team project for Coinbase Lake data"
 }
+
+
+
+#env role
+resource "aws_iam_role" "datazone_environment_role" {
+  name = "iam_datazone_environment_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = [
+            "datazone.amazonaws.com",
+            "glue.amazonaws.com",
+            "lakeformation.amazonaws.com"
+          ]
+        },
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "datazone_environment_policy" {
+  name = "datazone_environment_policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid: "GlueAndCatalog",
+        Effect: "Allow",
+        Action: [
+          "glue:*",
+          "lakeformation:*",
+          "s3:*"
+        ],
+        Resource: "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "datazone_environment_attach" {
+  role       = aws_iam_role.datazone_environment_role.name
+  policy_arn = aws_iam_policy.datazone_environment_policy.arn
+}
+
+
+
+
+
+# # blueprint
+# data "aws_datazone_environment_blueprint" "default_data_lake" {
+#   domain_id = aws_datazone_domain.coinbase_domain.id
+#   name      = "DefaultDataLake"
+#   managed   = true
+# }
+
+# resource "aws_datazone_environment_blueprint_configuration" "coinbase_blueprint" {
+#   domain_id                = aws_datazone_domain.coinbase_domain.id
+#   environment_blueprint_id = data.aws_datazone_environment_blueprint.default_data_lake.id
+#   enabled_regions          = ["us-east-2"]
+
+#   }
