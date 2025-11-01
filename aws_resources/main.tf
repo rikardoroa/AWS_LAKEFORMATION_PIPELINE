@@ -1,6 +1,8 @@
 # bucket module
 module "bucket_utils" {
   source      = "./bucket_module"
+  domain_execution_role_name   = module.datazone_utils.domain_execution_role_name
+  domain_environment_role_name = module.datazone_utils.domain_environment_role_name
 }
 
 # kinesis module
