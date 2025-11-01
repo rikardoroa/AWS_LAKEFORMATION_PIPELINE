@@ -56,21 +56,30 @@ resource "aws_iam_policy" "datazone_domain_execution_policy" {
           "lakeformation:GetEffectivePermissionsForPath",
           "lakeformation:ListResources",
           "s3:GetObject",
-          "s3:ListBucket",
-          "kms:Decrypt",
-          "kms:DescribeKey",
-          "kms:GenerateDataKey*"
+          "s3:ListBucket"
         ],
         Resource: [
           "*",
           "arn:aws:s3:::${var.bucket_name}",
-          "arn:aws:s3:::${var.bucket_name}/*",
-          var.kms_key_arn
+          "arn:aws:s3:::${var.bucket_name}/*"
         ]
+      },
+      {
+        Sid    = "KMSFullForDataZoneDomainExecution",
+        Effect = "Allow",
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ],
+        Resource = var.kms_key_arn
       }
     ]
   })
 }
+
 
 # role and policy attached
 resource "aws_iam_role_policy_attachment" "datazone_domain_execution_attach" {
@@ -184,7 +193,7 @@ data "aws_datazone_environment_blueprint" "default_data_lake" {
   name      = "DefaultDataLake"
   managed   = true
 }
-
+# role for blueprint(env role)
 resource "aws_datazone_environment_blueprint_configuration" "coinbase_blueprint" {
   domain_id                = aws_datazone_domain.coinbase_domain.id
   environment_blueprint_id = data.aws_datazone_environment_blueprint.default_data_lake.id
