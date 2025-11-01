@@ -123,4 +123,7 @@ resource "aws_datazone_project" "analytics_team" {
   domain_identifier = aws_datazone_domain.coinbase_domain.id
   name              = "analytics-project"
   description       = "BI & analytics team project for Coinbase Lake data"
+  project_owners = [
+    "arn:aws:iam::163257074638:user/rroatest"
+  ]
 }
