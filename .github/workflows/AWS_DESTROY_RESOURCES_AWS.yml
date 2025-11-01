@@ -56,6 +56,35 @@ jobs:
             echo "WorkGroup $ATHENA_WORKGROUP not found - skipped."
           fi
 
+      - name: Export Terraform Outputs (Glue Crawler)
+        working-directory: ./aws_resources
+        run: |
+          if terraform output -json | jq -e '.glue_crawler' >/dev/null 2>&1; then
+            CRAWLER_NAME=$(terraform output -raw glue_crawler)
+            echo "GLUE_CRAWLER=$CRAWLER_NAME" >> $GITHUB_ENV
+            echo "Crawler found -> $CRAWLER_NAME"
+          else
+            echo "GLUE_CRAWLER=" >> $GITHUB_ENV
+            echo "No GLUE_CRAWLER output found. Skipping."
+          fi
+
+
+      - name: Stop Glue Crawler (Safe / Idempotent)
+        if: env.GLUE_CRAWLER != ''
+        run: |
+          STATUS=$(aws glue get-crawler --name "$GLUE_CRAWLER" --query "Crawler.State" --output text 2>/dev/null || echo "")
+          if [ -n "$STATUS" ]; then
+            echo "Crawler state: $STATUS"
+            if [ "$STATUS" = "RUNNING" ]; then
+              echo "Stopping crawler $GLUE_CRAWLER ..."
+              aws glue stop-crawler --name "$GLUE_CRAWLER" || true
+            else
+              echo "Crawler not running. Nothing to stop."
+            fi
+          else
+            echo "Crawler not found. Skipping."
+          fi
+
       - name: Terraform Plan
         env:
           TF_VAR_api_key: ${{ secrets.API_KEY }}
