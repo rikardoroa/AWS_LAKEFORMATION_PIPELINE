@@ -28,11 +28,16 @@ jobs:
         run: terraform init -backend-config=../backend.hcl --reconfigure
         working-directory: ./aws_resources
 
+  
+      - name: Terraform Refresh (load state from remote)
+        run: terraform refresh
+        working-directory: ./aws_resources
+
       - name: Export Terraform Outputs (Athena Workgroup)
         id: tfoutputs
         working-directory: ./aws_resources
         run: |
-          WG_NAME=$(terraform output -raw athena_workgroup_name || echo "")
+          WG_NAME=$(terraform output -raw athena_workgroup_name 2>/dev/null || echo "")
           echo "ATHENA_WORKGROUP=$WG_NAME" >> $GITHUB_ENV
           echo "EXPORT -> $WG_NAME"
 
@@ -41,13 +46,14 @@ jobs:
         run: |
           EXIST=$(aws athena list-work-groups --query "WorkGroups[?Name=='$ATHENA_WORKGROUP']" --output text)
           if [ -n "$EXIST" ]; then
-            echo "WorkGroup $ATHENA_WORKGROUP exists, deleting..."
+            echo "WorkGroup $ATHENA_WORKGROUP exists - deleting..."
             aws athena delete-work-group \
-              --work-group "$ATHENA_WORKGROUP" \
+              --work-group-name "$ATHENA_WORKGROUP" \
               --recursive-delete-option || true
           else
-            echo "WorkGroup $ATHENA_WORKGROUP does not exist. Skipping."
+            echo "WorkGroup $ATHENA_WORKGROUP not found - skipped."
           fi
+
 
       - name: Terraform Plan
         env:
