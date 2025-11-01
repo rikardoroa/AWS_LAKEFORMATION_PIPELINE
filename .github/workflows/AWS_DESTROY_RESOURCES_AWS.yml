@@ -15,6 +15,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.9.8
+          terraform_wrapper: false
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -27,12 +28,11 @@ jobs:
         run: terraform init -backend-config=../backend.hcl --reconfigure
         working-directory: ./aws_resources
 
-      - name: Export Terraform Outputs
+       - name: Export Terraform Outputs
         id: tfoutputs
         run: |
-          echo "ATHENA_WORKGROUP=$(terraform output -raw athena_workgroup_name | awk '{print $1}')" >> $GITHUB_ENV
+          echo "ATHENA_WORKGROUP=$(terraform output -raw athena_workgroup_name)" >> $GITHUB_ENV
         working-directory: ./aws_resources
-
 
       - name: Delete Athena WorkGroup Force
         run: |
