@@ -28,7 +28,7 @@ jobs:
         run: terraform init -backend-config=../backend.hcl --reconfigure
         working-directory: ./aws_resources
 
-       - name: Export Terraform Outputs
+      - name: Export Terraform Outputs
         id: tfoutputs
         run: |
           echo "ATHENA_WORKGROUP=$(terraform output -raw athena_workgroup_name)" >> $GITHUB_ENV
