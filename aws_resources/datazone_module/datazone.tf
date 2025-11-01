@@ -38,10 +38,10 @@ resource "aws_iam_policy" "datazone_domain_execution_policy" {
         Sid: "DataZoneCoreAccess",
         Effect: "Allow",
         Action: [
-          # DataZone & Governance
+          # 🔹 DataZone & Governance
           "datazone:*",
 
-          # Glue Catalog
+          # 🔹 Glue Catalog
           "glue:GetDatabase",
           "glue:GetDatabases",
           "glue:GetTable",
@@ -49,16 +49,16 @@ resource "aws_iam_policy" "datazone_domain_execution_policy" {
           "glue:GetPartitions",
           "glue:GetCatalogImportStatus",
 
-          # Lake Formation
+          # 🔹 Lake Formation
           "lakeformation:GetDataAccess",
           "lakeformation:GetEffectivePermissionsForPath",
           "lakeformation:ListResources",
 
-          # 3 read
+          # 🔹 S3 lectura básica
           "s3:GetObject",
           "s3:ListBucket",
 
-          # KMS decrypt
+          # 🔹 KMS decrypt
           "kms:Decrypt",
           "kms:DescribeKey",
           "kms:GenerateDataKey*"
@@ -104,15 +104,18 @@ resource "aws_iam_role_policy_attachment" "datazone_domain_service_attach" {
 }
 
 ##########################################
-# 🏗️ DataZone Domain V2
+# 🏗️ DataZone Domain (compatible version)
 ##########################################
 resource "aws_datazone_domain" "coinbase_domain" {
   name                  = "coinbase-data-domain"
   description           = "AWS DataZone domain for Coinbase LakeFormation pipeline"
   domain_execution_role = aws_iam_role.datazone_domain_execution_role.arn
-  service_role          = aws_iam_role.datazone_domain_service_role.arn
-  domain_version        = "V2"
   kms_key_identifier    = var.kms_key_arn
+
+  tags = {
+    Project = "AWS_LAKEFORMATION_PIPELINE"
+    Owner   = "Ricardo Roa"
+  }
 }
 
 ##########################################
