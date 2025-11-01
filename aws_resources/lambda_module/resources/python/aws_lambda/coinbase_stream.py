@@ -40,7 +40,6 @@ class CoinBaseStream:
                 prices['date'] = datetime.strftime(datetime.today(), '%Y-%m-%d %H:%M:%S')
                 prices['currency_id'] = str(uuid.uuid1())
                 prices['timestamp'] = int(datetime.now().timestamp())
-                prices_payload.append(prices)
                 response = self.kinesis_client.put_record(
                     StreamName=os.getenv('stream_name'),
                     Data=json.dumps(prices),

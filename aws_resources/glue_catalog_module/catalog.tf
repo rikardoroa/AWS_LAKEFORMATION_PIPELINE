@@ -59,8 +59,8 @@ resource "aws_iam_role_policy" "glue_s3_policy" {
         ],
         Resource: [
           "arn:aws:s3:::${var.bucket_name}/coinbase/*",
-          "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/*"
-        ]
+          "arn:aws:s3:::${var.bucket_name}/coinbase/coinbase_currency_prices/*"
+        ]#"arn:aws:s3:::${var.bucket_name}/coinbase/ingest/*"
       },
       {
         Sid: "AllowFirehosePrefixes",
@@ -70,8 +70,9 @@ resource "aws_iam_role_policy" "glue_s3_policy" {
           "s3:ListBucket"
         ],
         Resource: [
-          "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/*"
-        ]
+          "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/*",
+          "arn:aws:s3:::${var.bucket_name}/coinbase/coinbase_currency_prices/*"
+        ]#"arn:aws:s3:::${var.bucket_name}/coinbase/ingest/*"
       },
       {
         Sid: "AllowKMSAccess",
@@ -149,8 +150,15 @@ resource "aws_glue_catalog_database" "coinbase_db" {
 }
 
 # data location registration in lakeformation
+# resource "aws_lakeformation_resource" "data_location" {
+#   arn      = "arn:aws:s3:::${var.bucket_name}"
+#   role_arn = aws_iam_role.glue_role.arn
+#   depends_on = [time_sleep.wait_for_lakeformation_settings]
+# }
+
+# data location registration in lakeformation
 resource "aws_lakeformation_resource" "data_location" {
-  arn      = "arn:aws:s3:::${var.bucket_name}"
+  arn = "arn:aws:s3:::${var.bucket_name}/coinbase/coinbase_currency_prices/*"
   role_arn = aws_iam_role.glue_role.arn
   depends_on = [time_sleep.wait_for_lakeformation_settings]
 }
