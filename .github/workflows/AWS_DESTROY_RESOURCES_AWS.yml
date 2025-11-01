@@ -28,25 +28,26 @@ jobs:
         run: terraform init -backend-config=../backend.hcl --reconfigure
         working-directory: ./aws_resources
 
-      - name: Export Terraform Outputs
+      - name: Export Terraform Outputs (Athena Workgroup)
         id: tfoutputs
-        run: |
-          OUTPUT=$(terraform output -raw athena_workgroup_name 2>&1)
-          if [[ $? -eq 0 && ! "$OUTPUT" =~ "Warning" && ! "$OUTPUT" =~ "╷" ]]; then
-            echo "ATHENA_WORKGROUP=$OUTPUT" >> $GITHUB_ENV
-            echo "Athena WorkGroup exported: $OUTPUT"
-          else
-            echo "No Terraform outputs found, skipping export"
-            echo "ATHENA_WORKGROUP=" >> $GITHUB_ENV
-          fi
         working-directory: ./aws_resources
+        run: |
+          WG_NAME=$(terraform output -raw athena_workgroup_name || echo "")
+          echo "ATHENA_WORKGROUP=$WG_NAME" >> $GITHUB_ENV
+          echo "EXPORT -> $WG_NAME"
 
-      - name: Delete Athena WorkGroup Force
+      - name: Delete Athena WorkGroup (Safe / Idempotent)
         if: env.ATHENA_WORKGROUP != ''
         run: |
-          aws athena delete-work-group \
-            --work-group $ATHENA_WORKGROUP \
-            --recursive-delete-option
+          EXIST=$(aws athena list-work-groups --query "WorkGroups[?Name=='$ATHENA_WORKGROUP']" --output text)
+          if [ -n "$EXIST" ]; then
+            echo "WorkGroup $ATHENA_WORKGROUP exists, deleting..."
+            aws athena delete-work-group \
+              --work-group "$ATHENA_WORKGROUP" \
+              --recursive-delete-option || true
+          else
+            echo "WorkGroup $ATHENA_WORKGROUP does not exist. Skipping."
+          fi
 
       - name: Terraform Plan
         env:
