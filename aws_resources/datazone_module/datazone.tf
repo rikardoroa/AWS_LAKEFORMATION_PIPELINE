@@ -178,16 +178,21 @@ resource "aws_iam_role_policy_attachment" "datazone_environment_attach" {
 
 
 
-# # blueprint
-# data "aws_datazone_environment_blueprint" "default_data_lake" {
-#   domain_id = aws_datazone_domain.coinbase_domain.id
-#   name      = "DefaultDataLake"
-#   managed   = true
-# }
+# blueprint
+data "aws_datazone_environment_blueprint" "default_data_lake" {
+  domain_id = aws_datazone_domain.coinbase_domain.id
+  name      = "DefaultDataLake"
+  managed   = true
+}
 
-# resource "aws_datazone_environment_blueprint_configuration" "coinbase_blueprint" {
-#   domain_id                = aws_datazone_domain.coinbase_domain.id
-#   environment_blueprint_id = data.aws_datazone_environment_blueprint.default_data_lake.id
-#   enabled_regions          = ["us-east-2"]
+resource "aws_datazone_environment_blueprint_configuration" "coinbase_blueprint" {
+  domain_id                = aws_datazone_domain.coinbase_domain.id
+  environment_blueprint_id = data.aws_datazone_environment_blueprint.default_data_lake.id
+  enabled_regions          = ["us-east-2"]
 
-#   }
+  regional_parameters = {
+    us-east-2 = {
+      provisioning_role_arn = aws_iam_role.datazone_environment_role.arn
+    }
+  }
+}
