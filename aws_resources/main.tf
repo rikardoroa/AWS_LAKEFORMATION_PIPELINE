@@ -39,3 +39,11 @@ module "glue_catalog_utils" {
   kms_key_arn =  module.bucket_utils.kms_key_arn
 
 }
+
+# --- 5. Glue Catalog ---
+module "datazone_utils" {
+  source      = "./datazone_module"
+  database_catalog = module.glue_catalog_utils.database_catalog
+  kms_key_arn =  module.bucket_utils.kms_key_arn
+
+}

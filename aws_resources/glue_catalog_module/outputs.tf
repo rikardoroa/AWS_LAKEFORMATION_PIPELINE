@@ -13,3 +13,7 @@ output "crawler_role"{
 output "data_location"{
     value = aws_lakeformation_resource.data_location.arn
 }
+
+output "database_catalog"{ 
+    value = aws_glue_catalog_database.coinbase_db.arn
+}
