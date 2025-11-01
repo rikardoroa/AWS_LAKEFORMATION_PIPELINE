@@ -28,9 +28,11 @@ jobs:
         run: terraform init -backend-config=../backend.hcl --reconfigure
         working-directory: ./aws_resources
 
-  
       - name: Terraform Refresh (load state from remote)
-        run: terraform refresh
+        env:
+          TF_VAR_api_key: ${{ secrets.API_KEY }}
+          TF_VAR_secret_key: ${{ secrets.SECRET_KEY }}
+        run: terraform refresh -input=false
         working-directory: ./aws_resources
 
       - name: Export Terraform Outputs (Athena Workgroup)
