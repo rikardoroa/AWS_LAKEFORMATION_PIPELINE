@@ -154,7 +154,7 @@ If they are missing, the **pipeline will fail** during deployment.
 | `API_SECRET` | Coinbase API secret key for authentication |
 | `AWS_ACCESS_KEY_ID` | AWS access key ID for authentication |
 | `AWS_SECRET_ACCESS_KEY` | AWS secret access key associated with the account |
-| `AWS_ROOT_ROLE` | role to execute the entire workflow |
+| `AWS_ROOT_ROLE` | Role to execute the entire workflow |
 
 **These variables must be configured under:**  
 👉 `Settings → Secrets and variables → Actions → Repository secrets`  
