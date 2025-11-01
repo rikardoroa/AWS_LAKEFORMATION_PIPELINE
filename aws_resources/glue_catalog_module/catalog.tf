@@ -245,10 +245,7 @@ resource "aws_lakeformation_permissions" "lambda_glue_create" {
   principal  = var.lambda_role
   permissions = ["CREATE_TABLE"]
 
-
   database {name = aws_glue_catalog_database.coinbase_db.name}
-
-
   depends_on = [
     aws_glue_catalog_database.coinbase_db,
     aws_lakeformation_data_lake_settings.default
