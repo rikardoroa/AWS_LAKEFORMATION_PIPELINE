@@ -33,7 +33,7 @@ jobs:
         env:
           TF_VAR_api_key: ${{ secrets.API_KEY }}
           TF_VAR_secret_key: ${{ secrets.API_SECRET }}
-          TR_VAR_root_role : ${{ secrets.AWS_ROOT_ROLE }}
+          TF_VAR_root_role : ${{ secrets.AWS_ROOT_ROLE }}
         run: terraform plan -out=tfplan
         working-directory: ./aws_resources
 
