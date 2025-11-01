@@ -95,10 +95,6 @@ If deploying manually from your local machine, execute Terraform in the followin
 # Initialize Terraform with remote backend
 terraform init -backend-config=backend.hcl --reconfigure
 
-# Format and validate configuration
-terraform fmt -recursive
-terraform validate
-
 # Plan infrastructure changes
 terraform plan -out=tfplan
 
