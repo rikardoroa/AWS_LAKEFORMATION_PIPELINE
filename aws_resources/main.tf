@@ -38,6 +38,7 @@ module "glue_catalog_utils" {
   bucket_name  =  module.bucket_utils.bucket_name
   lambda_role  =  module.lambda_utils.lambda_role
   kms_key_arn  =  module.bucket_utils.kms_key_arn
+  root_role    =  var.root_role
 }
 
 # datazone module
