@@ -29,12 +29,17 @@ jobs:
         working-directory: ./aws_resources
 
       - name: Export Terraform Outputs
-        id: tfoutputs
+        continue-on-error: true
         run: |
-          echo "ATHENA_WORKGROUP=$(terraform output -raw athena_workgroup_name)" >> $GITHUB_ENV
+          if terraform output -raw athena_workgroup_name 2>/dev/null; then
+            echo "ATHENA_WORKGROUP=$(terraform output -raw athena_workgroup_name)" >> $GITHUB_ENV
+          else
+            echo "No Terraform outputs found, skipping export"
+          fi
         working-directory: ./aws_resources
 
       - name: Delete Athena WorkGroup Force
+        if: env.ATHENA_WORKGROUP != ''
         run: |
           aws athena delete-work-group \
             --work-group $ATHENA_WORKGROUP \
