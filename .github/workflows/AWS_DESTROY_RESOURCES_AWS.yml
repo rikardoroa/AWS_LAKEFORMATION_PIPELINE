@@ -50,7 +50,7 @@ jobs:
           if [ -n "$EXIST" ]; then
             echo "WorkGroup $ATHENA_WORKGROUP exists - deleting..."
             aws athena delete-work-group \
-              --work-group-name "$ATHENA_WORKGROUP" \
+              --work-group "$ATHENA_WORKGROUP" \
               --recursive-delete-option || true
           else
             echo "WorkGroup $ATHENA_WORKGROUP not found - skipped."
