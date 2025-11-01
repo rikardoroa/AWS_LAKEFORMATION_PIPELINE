@@ -9,6 +9,13 @@ variable "bucket_name"{
 }
 
 variable "kms_key_arn"{
-     description = "ARN of the KMS key for encryption."
+    description = "ARN of the KMS key for encryption."
     type = string
+}
+
+variable "terraform_user"{
+    description = "user for execute lakeformation permissions"
+    type = string
+    default = "arn:aws:iam::163257074638:user/rroatest"
+
 }

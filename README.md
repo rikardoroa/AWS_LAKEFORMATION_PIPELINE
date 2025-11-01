@@ -139,6 +139,13 @@ The project includes two GitHub Actions workflows for automated infrastructure m
 - **Required Secrets:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `API_KEY`, `SECRET_KEY`
 - **Use Case:** Run this workflow when you want to delete all resources to avoid AWS charges
 
+> **⚠️ Critical:** Before running the destruction pipeline, you **must** manually delete the Athena workgroup to avoid dependency errors:
+> ```bash
+> aws athena delete-work-group --work-group "coinbase_athena_workgroup" --recursive-delete-option
+> ```
+> The Athena results bucket must be deleted manually or through the AWS CLI prior to environment destruction, since Terraform cannot remove non-empty buckets. This prevents errors during the teardown process.
+> This command removes the Athena workgroup and all associated query history. Without this step, `terraform destroy` may fail due to resource dependencies.
+
 > **⚠️ Important:** Both workflows reference environment variables as `TF_VAR_*` to pass secrets securely to Terraform. Ensure all required secrets are configured in your GitHub repository settings before running the pipelines.
 
 ---
