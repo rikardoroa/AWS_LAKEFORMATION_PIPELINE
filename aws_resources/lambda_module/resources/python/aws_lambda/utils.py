@@ -74,8 +74,7 @@ class DBUtils:
                 "TableType": "EXTERNAL_TABLE",
                 "Parameters": {
                     "classification": "json"
-                },
-                "PartitionKeys": [{"Name": "partition_date", "Type": "string"}],
+                }
             }
 
             logger.info(f"Creating or updating Glue table: {self.table_name}")
