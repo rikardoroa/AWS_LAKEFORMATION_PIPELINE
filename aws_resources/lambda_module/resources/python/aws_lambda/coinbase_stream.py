@@ -18,12 +18,23 @@ API_CALLS = 50
 class CoinBaseStream:
 
     def __init__(self):
+        """
+        Initialize Kinesis client, Coinbase price handler and DBUtils helper.
+        This constructor prepares all AWS service clients required for the pipeline.
+        """
         self.kinesis_client = boto3.client('kinesis')
         self.coin_base_price = CoinBasePrice()
         self.utils = DBUtils()
    
 
     def coinbase_api_calls(self):
+        """
+        Generator that yields price information from Coinbase API across multiple currencies.
+        Runs N API calls defined in API_CALLS constant and returns each record as a JSON dict.
+
+        Yields:
+            dict: cryptocurrency price payload returned from Coinbase API.
+        """
         try:
             for call in range(API_CALLS):
                 for currency in CURRENCIES:
@@ -33,8 +44,13 @@ class CoinBaseStream:
             logger.error(f'can not implements api calls, verify if the token expired:{e}')
 
     def send_coinbase_prices(self):
+        """
+        Collects price data from API, enriches each record with metadata fields (timestamp, uuid, formatted date),
+        then pushes each record into Kinesis using the configured stream.
+        
+        After pushing data, validates Glue table existence and Lake Formation permissions via DBUtils.
+        """
         try:
-            
             records_sent = 0
             for prices in self.coinbase_api_calls():
                 prices['date'] = datetime.strftime(datetime.today(), '%Y-%m-%d %H:%M:%S')

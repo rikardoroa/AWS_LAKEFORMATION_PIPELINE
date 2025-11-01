@@ -100,29 +100,6 @@ resource "aws_iam_role_policy" "firehose_policy_attach" {
   policy = data.aws_iam_policy_document.firehose_policy.json
 }
 
-# # firehose config
-# resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
-#   name        = var.firehose_name
-#   destination = "extended_s3"
-
-#   extended_s3_configuration {
-#     role_arn           = aws_iam_role.firehose_role.arn
-#     bucket_arn         = var.bucket_arn
-#     compression_format = "UNCOMPRESSED"
-#     kms_key_arn        = var.kms_key_arn
-#     prefix              = "coinbase/ingest/partition_date=!{timestamp:yyyy-MM-dd}/"
-#     error_output_prefix = "coinbase/errors/!{firehose:error-output-type}/"
-#     buffering_interval  = 60   # segundos
-#     buffering_size      = 5    # MB
-#     file_extension = ".json"
-#   }
-
-#   kinesis_source_configuration {
-#     kinesis_stream_arn = aws_kinesis_stream.coinbase_stream.arn
-#     role_arn           = aws_iam_role.firehose_role.arn
-#   }
-# }
-
 # firehose config
 resource "aws_kinesis_firehose_delivery_stream" "coinbase_firehose" {
   name        = var.firehose_name

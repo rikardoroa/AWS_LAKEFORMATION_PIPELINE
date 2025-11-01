@@ -60,7 +60,7 @@ resource "aws_iam_role_policy" "glue_s3_policy" {
         Resource: [
           "arn:aws:s3:::${var.bucket_name}/coinbase/*",
           "arn:aws:s3:::${var.bucket_name}/coinbase/coinbase_currency_prices/*"
-        ]#"arn:aws:s3:::${var.bucket_name}/coinbase/ingest/*"
+        ]
       },
       {
         Sid: "AllowFirehosePrefixes",
@@ -72,7 +72,7 @@ resource "aws_iam_role_policy" "glue_s3_policy" {
         Resource: [
           "arn:aws:s3:::${var.bucket_name}/coinbase/ingest/*",
           "arn:aws:s3:::${var.bucket_name}/coinbase/coinbase_currency_prices/*"
-        ]#"arn:aws:s3:::${var.bucket_name}/coinbase/ingest/*"
+        ]
       },
       {
         Sid: "AllowKMSAccess",
@@ -150,13 +150,6 @@ resource "aws_glue_catalog_database" "coinbase_db" {
 }
 
 # data location registration in lakeformation
-# resource "aws_lakeformation_resource" "data_location" {
-#   arn      = "arn:aws:s3:::${var.bucket_name}"
-#   role_arn = aws_iam_role.glue_role.arn
-#   depends_on = [time_sleep.wait_for_lakeformation_settings]
-# }
-
-# data location registration in lakeformation
 resource "aws_lakeformation_resource" "data_location" {
   arn = "arn:aws:s3:::${var.bucket_name}/coinbase/coinbase_currency_prices/*"
   role_arn = aws_iam_role.glue_role.arn
@@ -172,45 +165,6 @@ resource "aws_glue_classifier" "json_classifier" {
     json_path = "$"
   }
 }
-
-# # Glue crawler **
-# resource "aws_glue_crawler" "coinbase_s3_crawler" {
-#   name          = "coinbase_s3_crawler"
-#   role          = aws_iam_role.glue_role.arn
-#   database_name = aws_glue_catalog_database.coinbase_db.name
-#   description   = "Crawler que detecta archivos JSONL comprimidos con GZIP"
-#   table_prefix  = ""
-
-#   s3_target {
-#     path = "s3://${var.bucket_name}/coinbase/ingest/"
-#   }
-
-
-#   classifiers = [aws_glue_classifier.json_classifier.name]
-
-#   recrawl_policy {
-#     recrawl_behavior = "CRAWL_EVERYTHING"
-#   }
-
-#   schema_change_policy {
-#     update_behavior = "UPDATE_IN_DATABASE"
-#     delete_behavior = "LOG"
-#   }
-
-#   configuration = jsonencode({
-#     Version  = 1.0,
-#     Grouping = { TableGroupingPolicy = "CombineCompatibleSchemas" }
-#   })
-
-#   schedule = "cron(0/10 * * * ? *)"
-
-#   depends_on = [
-#     aws_glue_catalog_database.coinbase_db,
-#     aws_iam_role_policy.glue_s3_policy,
-#     aws_iam_role_policy.glue_lakeformation_policy,
-#     aws_glue_classifier.json_classifier   
-#   ]
-# }
 
 # Glue crawler **
 resource "aws_glue_crawler" "coinbase_s3_crawler" {
@@ -370,10 +324,3 @@ resource "aws_lakeformation_permissions" "lambda_table_access" {
     aws_lakeformation_permissions.lambda_data_location_access
   ]
 }
-
-# ##########################################
-# # 🧾 1️⃣3️⃣ Verificación del bucket
-# ##########################################
-# data "aws_s3_bucket" "main" {
-#   bucket = var.bucket_name
-# }
