@@ -37,8 +37,8 @@ jobs:
       - name: Delete Athena WorkGroup Force
         run: |
           aws athena delete-work-group \
-            --work-group-name $ATHENA_WORKGROUP \
-            --recursive-delete-option || true
+            --work-group $ATHENA_WORKGROUP \
+            --recursive-delete-option
 
       - name: Terraform Plan
         env:
