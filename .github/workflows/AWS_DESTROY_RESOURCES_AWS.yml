@@ -29,12 +29,15 @@ jobs:
         working-directory: ./aws_resources
 
       - name: Export Terraform Outputs
-        continue-on-error: true
+        id: tfoutputs
         run: |
-          if terraform output -raw athena_workgroup_name 2>/dev/null; then
-            echo "ATHENA_WORKGROUP=$(terraform output -raw athena_workgroup_name)" >> $GITHUB_ENV
+          OUTPUT=$(terraform output -raw athena_workgroup_name 2>&1)
+          if [[ $? -eq 0 && ! "$OUTPUT" =~ "Warning" && ! "$OUTPUT" =~ "╷" ]]; then
+            echo "ATHENA_WORKGROUP=$OUTPUT" >> $GITHUB_ENV
+            echo "Athena WorkGroup exported: $OUTPUT"
           else
             echo "No Terraform outputs found, skipping export"
+            echo "ATHENA_WORKGROUP=" >> $GITHUB_ENV
           fi
         working-directory: ./aws_resources
 
