@@ -1,6 +1,8 @@
+# account and region identity
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+#lambda role
 resource "aws_iam_role" "iam_dev_role_cb_api" {
   name = "iam_dev_role_cb_api"
 
@@ -14,6 +16,7 @@ resource "aws_iam_role" "iam_dev_role_cb_api" {
   })
 }
 
+# lambda policy
 data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
   statement {
     sid    = "CloudWatchLogging"
@@ -87,7 +90,6 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
     ]
   }
 
- # AGREGAR PERMISOS DE LAKE FORMATION
   statement {
     sid    = "LakeFormationFullAccess"
     effect = "Allow"
@@ -98,6 +100,7 @@ data "aws_iam_policy_document" "pipeline_dev_policy_cb_api" {
   }
 }
 
+#attaching role and policy
 resource "aws_iam_role_policy" "pipeline_dev_policy_attachment_cb_api" {
   name   = "pipeline_dev_policy_cb_api"
   role   = aws_iam_role.iam_dev_role_cb_api.id

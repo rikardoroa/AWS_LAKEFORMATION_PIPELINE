@@ -1,3 +1,4 @@
+# current account identity
 data "aws_caller_identity" "current" {}
 
 # Creating the KMS key resource

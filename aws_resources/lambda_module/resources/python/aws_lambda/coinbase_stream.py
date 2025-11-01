@@ -34,7 +34,7 @@ class CoinBaseStream:
 
     def send_coinbase_prices(self):
         try:
-            prices_payload = []
+            
             records_sent = 0
             for prices in self.coinbase_api_calls():
                 prices['date'] = datetime.strftime(datetime.today(), '%Y-%m-%d %H:%M:%S')
@@ -52,10 +52,6 @@ class CoinBaseStream:
                     logger.error(f"Failed to send record: {response}")
             
             logger.info(f"Successfully sent {records_sent} records to Kinesis")
-            df = pd.DataFrame(prices_payload)
-            self.utils.create_data_catalog_table(df)
-            self.utils.ensure_permissions_on_existing_table()
-            
-
+            self.utils.verify_table_exists()
         except Exception as e:
             logger.error(f'can not generate the kinesis stream, please verify the configuration:{e}')

@@ -1,12 +1,8 @@
-##########################################
-# 📌 Data & Identity
-##########################################
+# account and region identity
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
-##########################################
-# 🧩 IAM Role – Domain Execution (Fixed trust)
-##########################################
+# iam for domain execution
 resource "aws_iam_role" "datazone_domain_execution_role" {
   name = "iam_datazone_domain_execution_role"
 
@@ -37,9 +33,7 @@ resource "aws_iam_role" "datazone_domain_execution_role" {
   })
 }
 
-##########################################
-# 🧩 IAM Policy – Domain Execution
-##########################################
+# domain execution policy
 resource "aws_iam_policy" "datazone_domain_execution_policy" {
   name        = "datazone_domain_execution_policy"
   description = "Allow DataZone to integrate with Glue, LakeFormation, S3 and KMS for Coinbase data"
@@ -51,27 +45,18 @@ resource "aws_iam_policy" "datazone_domain_execution_policy" {
         Sid: "DataZoneCoreAccess",
         Effect: "Allow",
         Action: [
-          # 🔹 DataZone & Governance
           "datazone:*",
-
-          # 🔹 Glue Catalog
           "glue:GetDatabase",
           "glue:GetDatabases",
           "glue:GetTable",
           "glue:GetTables",
           "glue:GetPartitions",
           "glue:GetCatalogImportStatus",
-
-          # 🔹 Lake Formation
           "lakeformation:GetDataAccess",
           "lakeformation:GetEffectivePermissionsForPath",
           "lakeformation:ListResources",
-
-          # 🔹 S3 lectura básica
           "s3:GetObject",
           "s3:ListBucket",
-
-          # 🔹 KMS decrypt
           "kms:Decrypt",
           "kms:DescribeKey",
           "kms:GenerateDataKey*"
@@ -87,14 +72,14 @@ resource "aws_iam_policy" "datazone_domain_execution_policy" {
   })
 }
 
+# role and policy attached
 resource "aws_iam_role_policy_attachment" "datazone_domain_execution_attach" {
   role       = aws_iam_role.datazone_domain_execution_role.name
   policy_arn = aws_iam_policy.datazone_domain_execution_policy.arn
 }
 
-##########################################
-# 🧩 IAM Role – Domain Service
-##########################################
+
+# role for domain service
 resource "aws_iam_role" "datazone_domain_service_role" {
   name = "iam_datazone_domain_service_role"
 
@@ -113,15 +98,14 @@ resource "aws_iam_role" "datazone_domain_service_role" {
   })
 }
 
-# 🔹 Reutilizamos la misma policy para el service role
+# attaching policy and role
 resource "aws_iam_role_policy_attachment" "datazone_domain_service_attach" {
   role       = aws_iam_role.datazone_domain_service_role.name
   policy_arn = aws_iam_policy.datazone_domain_execution_policy.arn
 }
 
-##########################################
-# 🏗️ DataZone Domain (compatible version)
-##########################################
+
+# datazone domain definition
 resource "aws_datazone_domain" "coinbase_domain" {
   name                  = "coinbase-data-domain"
   description           = "AWS DataZone domain for Coinbase LakeFormation pipeline"
@@ -134,22 +118,9 @@ resource "aws_datazone_domain" "coinbase_domain" {
   }
 }
 
-##########################################
-# 👥 DataZone Project (opcional)
-##########################################
+# project
 resource "aws_datazone_project" "analytics_team" {
   domain_identifier = aws_datazone_domain.coinbase_domain.id
   name              = "analytics-project"
   description       = "BI & analytics team project for Coinbase Lake data"
-}
-
-##########################################
-# 💡 Outputs
-##########################################
-output "datazone_domain_id" {
-  value = aws_datazone_domain.coinbase_domain.id
-}
-
-output "datazone_project_id" {
-  value = aws_datazone_project.analytics_team.id
 }
