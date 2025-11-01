@@ -16,6 +16,11 @@ jobs:
         with:
           terraform_version: 1.9.8
 
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -26,6 +31,18 @@ jobs:
       - name: Terraform Init
         run: terraform init -backend-config=../backend.hcl --reconfigure
         working-directory: ./aws_resources
+
+      - name: Export Terraform Outputs
+        id: tfoutputs
+        run: |
+          echo "ATHENA_WORKGROUP=$(terraform output -raw athena_workgroup_name)" >> $GITHUB_ENV
+        working-directory: ./aws_resources
+
+      - name: Delete Athena WorkGroup Force
+        run: |
+          aws athena delete-work-group \
+            --work-group-name $ATHENA_WORKGROUP \
+            --recursive-delete-option || true
 
       - name: Terraform Plan
         env:

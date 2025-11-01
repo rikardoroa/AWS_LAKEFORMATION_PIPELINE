@@ -54,6 +54,7 @@ resource "aws_s3_bucket_public_access_block" "public_access_block" {
 # bucket for athena results
 resource "aws_s3_bucket" "athena_results" {
   bucket = "coinbase-athena-api-results"
+  force_destroy = true
 }
 
 # workgroup for query results

@@ -42,6 +42,6 @@ module "glue_catalog_utils" {
 module "datazone_utils" {
   source           = "./datazone_module"
   database_catalog = module.glue_catalog_utils.database_catalog
-  kms_key_arn      =  module.bucket_utils.kms_key_arn
+  kms_key_arn      = module.bucket_utils.kms_key_arn
   bucket_name      = module.bucket_utils.bucket_name
 }
