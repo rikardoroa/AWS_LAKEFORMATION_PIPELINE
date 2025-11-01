@@ -140,6 +140,7 @@ jobs:
         env:
           TF_VAR_api_key: ${{ secrets.API_KEY }}
           TF_VAR_secret_key: ${{ secrets.SECRET_KEY }}
+          TR_VAR_root_role : ${{ secrets.AWS_ROOT_ROLE }}
         run: terraform plan -out=tfplan -input=false
         working-directory: ./aws_resources
 
@@ -147,5 +148,6 @@ jobs:
         env:
           TF_VAR_api_key: ${{ secrets.API_KEY }}
           TF_VAR_secret_key: ${{ secrets.SECRET_KEY }}
+          TR_VAR_root_role : ${{ secrets.AWS_ROOT_ROLE }}
         run: terraform destroy -auto-approve -input=false
         working-directory: ./aws_resources

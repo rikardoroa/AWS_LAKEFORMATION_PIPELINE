@@ -13,9 +13,15 @@ variable "kms_key_arn"{
     type = string
 }
 
-variable "terraform_user"{
-    description = "user for execute lakeformation permissions"
-    type = string
-    default = "arn:aws:iam::163257074638:user/rroatest"
+variable "root_role"{
+  description = "Root role for execute the entire workflow"
+  type        = string
 
 }
+
+# variable "terraform_user"{
+#     description = "user for execute lakeformation permissions"
+#     type = string
+#     default = "arn:aws:iam::163257074638:user/rroatest"
+
+# }
