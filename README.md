@@ -37,7 +37,7 @@ Before proceeding, verify which AWS user or role will execute Terraform:
 aws sts get-caller-identity
 ```
 
-**Important:** The returned user/role ARN must be saved as a GitHub repository secret named AWS_ROOT_ROLE. This ARN will execute the entire Terraform workflow and is required for Lake Formation admin permissions configuration. Without this secret properly configured, the pipeline will fail during deploymen
+**Important:** The returned user/role ARN must be saved as a GitHub repository secret named **_AWS_ROOT_ROLE_**. This ARN will execute the entire Terraform workflow and is required for Lake Formation admin permissions configuration. Without this secret properly configured, the pipeline will fail during deploymen
 
 ---
 
