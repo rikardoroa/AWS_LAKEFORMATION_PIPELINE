@@ -85,6 +85,73 @@ jobs:
             echo "Crawler not found. Skipping."
           fi
 
+      - name: Export Terraform Outputs (DataZone)
+        working-directory: ./aws_resources
+        run: |
+          echo "DATAZONE_DOMAIN_ID=$(terraform output -raw datazone_domain_id)" >> $GITHUB_ENV
+          echo "DATAZONE_PROJECT_ID=$(terraform output -raw datazone_project_id)" >> $GITHUB_ENV
+
+
+      - name: Delete DataZone Environment (Safe / Idempotent)
+        if: env.DATAZONE_PROJECT_ID != '' && env.DATAZONE_DOMAIN_ID != ''
+        run: |
+          ENV_ID=$(aws datazone list-environments \
+            --domain-identifier "$DATAZONE_DOMAIN_ID" \
+            --project-identifier "$DATAZONE_PROJECT_ID" \
+            --region us-east-2 --query "items[0].id" --output text 2>/dev/null || echo "")
+
+          if [ "$ENV_ID" != "None" ] && [ -n "$ENV_ID" ]; then
+            echo "Deleting environment $ENV_ID..."
+            aws datazone delete-environment \
+              --domain-identifier "$DATAZONE_DOMAIN_ID" \
+              --project-identifier "$DATAZONE_PROJECT_ID" \
+              --identifier "$ENV_ID" \
+              --region us-east-2 || true
+          else
+            echo "No environment found. Skipping."
+          fi
+
+      - name: Delete DataZone Environment Profile (Safe / Idempotent)
+        if: env.DATAZONE_PROJECT_ID != '' && env.DATAZONE_DOMAIN_ID != ''
+        run: |
+          PROFILE_ID=$(aws datazone list-environment-profiles \
+            --domain-identifier "$DATAZONE_DOMAIN_ID" \
+            --project-identifier "$DATAZONE_PROJECT_ID" \
+            --region us-east-2 --query "items[0].id" --output text 2>/dev/null || echo "")
+
+          if [ "$PROFILE_ID" != "None" ] && [ -n "$PROFILE_ID" ]; then
+            echo "Deleting environment profile $PROFILE_ID..."
+            aws datazone delete-environment-profile \
+              --domain-identifier "$DATAZONE_DOMAIN_ID" \
+              --project-identifier "$DATAZONE_PROJECT_ID" \
+              --identifier "$PROFILE_ID" \
+              --region us-east-2 || true
+          else
+            echo "No environment profile found. Skipping."
+          fi
+
+
+      - name: Delete DataZone Environment Profile (Safe / Idempotent)
+        if: env.DATAZONE_PROJECT_ID != '' && env.DATAZONE_DOMAIN_ID != ''
+        run: |
+          PROFILE_ID=$(aws datazone list-environment-profiles \
+            --domain-identifier "$DATAZONE_DOMAIN_ID" \
+            --project-identifier "$DATAZONE_PROJECT_ID" \
+            --region us-east-2 --query "items[0].id" --output text 2>/dev/null || echo "")
+
+          if [ "$PROFILE_ID" != "None" ] && [ -n "$PROFILE_ID" ]; then
+            echo "Deleting environment profile $PROFILE_ID..."
+            aws datazone delete-environment-profile \
+              --domain-identifier "$DATAZONE_DOMAIN_ID" \
+              --project-identifier "$DATAZONE_PROJECT_ID" \
+              --identifier "$PROFILE_ID" \
+              --region us-east-2 || true
+          else
+            echo "No environment profile found. Skipping."
+          fi
+
+
+
       - name: Terraform Plan
         env:
           TF_VAR_api_key: ${{ secrets.API_KEY }}
