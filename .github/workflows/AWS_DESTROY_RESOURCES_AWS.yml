@@ -85,7 +85,7 @@ jobs:
             echo "Crawler not found. Skipping."
           fi
 
-            - name: Export Terraform Outputs (DataZone)
+      - name: Export Terraform Outputs (DataZone)
         working-directory: ./aws_resources
         run: |
           echo "DATAZONE_DOMAIN_ID=$(terraform output -raw datazone_domain_id)" >> $GITHUB_ENV
