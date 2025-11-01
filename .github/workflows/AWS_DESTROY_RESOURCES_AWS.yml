@@ -54,7 +54,6 @@ jobs:
             echo "WorkGroup $ATHENA_WORKGROUP not found - skipped."
           fi
 
-
       - name: Terraform Plan
         env:
           TF_VAR_api_key: ${{ secrets.API_KEY }}
