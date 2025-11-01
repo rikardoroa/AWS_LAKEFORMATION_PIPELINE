@@ -43,7 +43,7 @@ class CoinBaseStream:
                 prices_payload.append(prices)
                 response = self.kinesis_client.put_record(
                     StreamName=os.getenv('stream_name'),
-                    Data=json.dumps(prices) + '\n',
+                    Data=json.dumps(prices),
                     PartitionKey=prices['base']
                 )
                 records_sent += 1
