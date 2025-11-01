@@ -304,9 +304,9 @@ resource "aws_lakeformation_permissions" "lambda_table_access" {
   ]
 }
 
-##########################################
-# 🧾 1️⃣3️⃣ Verificación del bucket
-##########################################
-data "aws_s3_bucket" "main" {
-  bucket = var.bucket_name
-}
+# ##########################################
+# # 🧾 1️⃣3️⃣ Verificación del bucket
+# ##########################################
+# data "aws_s3_bucket" "main" {
+#   bucket = var.bucket_name
+# }
