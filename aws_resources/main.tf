@@ -36,5 +36,6 @@ module "glue_catalog_utils" {
   source      = "./glue_catalog_module"
   bucket_name = module.bucket_utils.bucket_name
   lambda_role = module.lambda_utils.lambda_role
+  kms_key_arn =  module.bucket_utils.kms_key_arn
 
 }

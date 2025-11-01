@@ -70,6 +70,20 @@ resource "aws_iam_role_policy" "glue_s3_policy" {
         ]
       }
     ]
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ],
+        Resource = [var.kms_key_arn]
+      }
+    ]
+
   })
 }
 
