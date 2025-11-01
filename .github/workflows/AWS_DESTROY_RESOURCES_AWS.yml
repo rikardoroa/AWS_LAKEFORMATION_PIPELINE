@@ -30,8 +30,9 @@ jobs:
       - name: Export Terraform Outputs
         id: tfoutputs
         run: |
-          echo "ATHENA_WORKGROUP=$(terraform output -raw athena_workgroup_name)" >> $GITHUB_ENV
+          echo "ATHENA_WORKGROUP=$(terraform output -raw athena_workgroup_name | awk '{print $1}')" >> $GITHUB_ENV
         working-directory: ./aws_resources
+
 
       - name: Delete Athena WorkGroup Force
         run: |
