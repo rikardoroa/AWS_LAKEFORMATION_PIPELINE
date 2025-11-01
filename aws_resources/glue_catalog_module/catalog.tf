@@ -115,7 +115,7 @@ resource "aws_lakeformation_data_lake_settings" "default" {
   admins = [
     aws_iam_role.glue_role.arn,
     var.lambda_role,
-    var.terraform_user
+    var.root_role
   ]
 
   create_database_default_permissions {
