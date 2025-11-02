@@ -399,6 +399,9 @@ Manual cleanup workflow for complete teardown:
 **Project Owner:** Ricardo Roa  
 **Purpose:** AWS Data Lake Formation & Real-Time Analytics Pipeline
 
+## 🏗️🛰️  Architecture
+![diagram](architecture/architecture.png)
+
 ---
 
 ## 📝 License
